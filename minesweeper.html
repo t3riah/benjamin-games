@@ -6,9 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
     <title>Benjamin's Minesweeper</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
       :root{
         --bg:#ffffff; --ink:#1a1a1b; --ink-soft:#787c7e; --ink-faint:#a3a6a8;
@@ -36,13 +33,13 @@
       }
       *{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
       html,body{overflow-x:hidden}
-      body{margin:0;font-family:"Libre Franklin","Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;min-height:100dvh;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+      body{margin:0;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;min-height:100dvh;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
       button{touch-action:manipulation}
       .wrap{max-width:880px;margin:0 auto;padding:0 max(16px,var(--sar)) calc(56px + var(--sab)) max(16px,var(--sal))}
 
       /* NYT-style header: centered serif title over a thin rule */
       header{position:relative;border-bottom:1px solid var(--line);padding:calc(18px + var(--sat)) 0 14px;text-align:center;margin-bottom:16px}
-      h1{font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:clamp(30px,7vw,40px);line-height:1.05;margin:0 0 6px;letter-spacing:.01em}
+      h1{font-family:"Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", sans-serif;font-weight:400;font-size:clamp(30px,7vw,40px);line-height:1.05;margin:0 0 6px;letter-spacing:.01em}
       .tagline{margin:0 auto;max-width:54ch;color:var(--ink-soft);font-size:14.5px;line-height:1.5}
       .tagline strong{color:var(--ink)}
 
@@ -137,7 +134,7 @@
       .banner.show{display:block}
       .banner.win{background:var(--green-bg);border:1px solid var(--green)}
       .banner.lose{background:var(--bad-bg);border:1px solid var(--line-dark)}
-      .banner h2{font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:28px;margin:0 0 6px}
+      .banner h2{font-family:"Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", sans-serif;font-weight:400;font-size:28px;margin:0 0 6px}
       .banner p{margin:0 0 10px;color:var(--ink-soft);font-size:15px;line-height:1.55}
       .banner p strong{color:var(--ink)}
       .banner .accuracy{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Benjamin's Games</title>
 <style>
   * { box-sizing: border-box; }
@@ -57,12 +57,13 @@
   <div class="game">
     <h2>Minesweeper</h2>
     <p>Clear every safe square without clicking a mine. Numbers tell you how many mines touch that square, and you flag the squares you think hide mines.</p>
+    <p>Note: Minesweeper also appears in the Arcade below, with its own separate statistics. This standalone version keeps its own record.</p>
     <p>Your first tap is always safe. Beginner is 9 by 9 with 10 mines, Medium is 16 by 16 with 40, Expert is 30 by 16 with 99. Flag by right click, long press, F key, or Flag mode, use chording on numbered squares, and ask for a Hint that pulses a safe square.</p>
     <a href="minesweeper.html">Play Minesweeper</a>
   </div>
   <div class="game">
     <h2>Arcade</h2>
-    <p>Five classic games in one place, each with its own statistics, badges, and difficulty options.</p>
+    <p>Five classic games in one place, each with its own statistics, badges, and difficulty options. Minesweeper here keeps a separate record from the standalone Minesweeper above.</p>
     <ul>
       <li><strong>Hangman:</strong> Guess a hidden word one letter at a time, with a hint and a gallows that builds with each wrong guess. Win before the drawing is complete.</li>
       <li><strong>Wordle:</strong> Guess a five letter word in six tries. Green means right letter in the right spot, yellow means right letter in the wrong spot, gray means not in the word.</li>
@@ -89,6 +90,23 @@
     </ul>
     <a href="arcade2.html">Play Arcade 2</a>
   </div>
+  <div class="game">
+    <h2>Clear saved statistics</h2>
+    <p>Statistics and badges save on this device only. Use this to start fresh across all games on this device. This does not delete any game, and it cannot be undone.</p>
+    <a href="#" id="clearStatsLink">Clear all saved statistics on this device</a>
+  </div>
+  <script>
+    document.getElementById("clearStatsLink").addEventListener("click", function(e){
+      e.preventDefault();
+      if(!confirm("Clear all Benjamin's Games statistics and badges saved on this device?")) return;
+      var keys = [];
+      for(var i=0;i<localStorage.length;i++){ keys.push(localStorage.key(i)); }
+      keys.forEach(function(k){
+        if(k.indexOf("benjamin")===0 || k.indexOf("benjamins-")===0) localStorage.removeItem(k);
+      });
+      alert("Saved statistics cleared on this device.");
+    });
+  </script>
 </main>
 <footer>Benjamin's Games on no13thfloor.org. Statistics and badges save on your device only, and streaks count consecutive wins, not calendar days.</footer>
 </body>
