@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Benjamin's Buttons</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --ink: #1a1a1b;
+        --ink-soft: #565f6a;
+        --ink-faint: #787c7e;
+        --line: #d3d6da;
+        --line-dark: #878a8c;
+        --green: #538d4e;
+        --green-dark: #467843;
+        --yellow: #c9b458;
+        --yellow-edge: #a8943f;
+        --gray: #787c7e;
+        --gray-dark: #565758;
+        --key: #d3d6da;
+        --key-hover: #c4c7cc;
+        --tile-off-bg: #ffffff;
+        --tile-on-bg: #c9b458;
+        --panel: #f6f7f8;
+        --good-bg: #e9f2e8;
+        --hint-bg: #fdf8e3;
+        --hint-edge: #c9b458;
+        --focus: #538d4e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121213;
+          --ink: #ffffff;
+          --ink-soft: #c9c9c9;
+          --ink-faint: #818384;
+          --line: #3a3a3c;
+          --line-dark: #818384;
+          --green: #538d4e;
+          --green-dark: #6aaa64;
+          --yellow: #c9b458;
+          --yellow-edge: #b59f3b;
+          --gray: #787c7e;
+          --gray-dark: #a8a8a8;
+          --key: #818384;
+          --key-hover: #9a9b9c;
+          --tile-off-bg: #121213;
+          --tile-on-bg: #b59f3b;
+          --panel: #1e1e20;
+          --good-bg: #1c2b1b;
+          --hint-bg: #2a2617;
+          --hint-edge: #b59f3b;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        font-family: "Libre Franklin", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        min-height: 100vh;
+      }
+      .wrap { max-width: 520px; margin: 0 auto; padding: 0 16px 48px; }
+
+      /* ---------- Masthead (NYT Wordle style) ---------- */
+      .masthead {
+        border-bottom: 1px solid var(--line);
+        margin: 0 -16px;
+        padding: 10px 16px 9px;
+        display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+      }
+      .masthead .brand {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--ink-faint); white-space: nowrap;
+      }
+      .masthead .puzzle-no {
+        font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+        color: var(--ink-faint); white-space: nowrap; font-variant-numeric: tabular-nums;
+      }
+      h1 {
+        font-family: "Zilla Slab", Georgia, serif;
+        font-weight: 700; font-size: clamp(26px, 6.5vw, 34px);
+        line-height: 1; margin: 0; text-align: center; letter-spacing: 0.01em;
+      }
+      .tagline {
+        text-align: center; margin: 14px auto 4px; max-width: 44ch;
+        color: var(--ink-soft); font-size: 14.5px; line-height: 1.5;
+      }
+      .tagline strong { color: var(--ink); }
+
+      /* ---------- Controls: flat keyboard-style keys ---------- */
+      .controls {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        justify-content: center; align-items: center; margin: 16px 0 6px;
+      }
+      .seg { display: inline-flex; gap: 5px; }
+      .seg button, .btn {
+        appearance: none; border: 0; cursor: pointer; font: inherit;
+        background: var(--key); color: var(--ink);
+        font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+        padding: 10px 13px; border-radius: 4px; line-height: 1;
+        transition: background 0.12s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .seg button:hover, .btn:hover { background: var(--key-hover); }
+      .seg button[aria-pressed="true"] { background: var(--gray-dark); color: #fff; }
+      @media (prefers-color-scheme: dark) { .seg button[aria-pressed="true"] { background: #565758; } }
+      .btn.primary { background: var(--green); color: #fff; }
+      .btn.primary:hover { background: var(--green-dark); }
+      .btn:disabled { opacity: 0.38; cursor: default; }
+      .btn:disabled:hover { background: var(--key); }
+      .btn.primary:disabled:hover { background: var(--green); }
+      .seg button:focus-visible, .btn:focus-visible, .cell:focus-visible {
+        outline: 3px solid var(--focus); outline-offset: 2px;
+      }
+      .btn .count {
+        background: rgba(0,0,0,0.18); border-radius: 99px; padding: 1px 7px;
+        font-size: 11px; margin-left: 2px;
+      }
+
+      /* ---------- Stats: flat row, no cards ---------- */
+      .stats {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        border-bottom: 1px solid var(--line);
+        padding: 12px 0 10px; margin-bottom: 16px; text-align: center;
+      }
+      .stat .v { font-size: 24px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+      .stat .k {
+        font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--ink-faint); font-weight: 600; margin-top: 2px;
+      }
+
+      /* ---------- Board: flat Wordle tiles ---------- */
+      .board-top {
+        display: flex; justify-content: space-between; align-items: center;
+        max-width: 420px; margin: 0 auto 8px;
+        font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+        color: var(--ink-faint); font-weight: 700;
+      }
+      .lamp { display: inline-flex; align-items: center; gap: 7px; }
+      .lamp i { width: 10px; height: 10px; background: var(--yellow); display: inline-block; border: 1px solid var(--yellow-edge); }
+      .lamp.done i { background: var(--green); border-color: var(--green); border-radius: 50%; }
+      .board {
+        display: grid; gap: 5px;
+        max-width: 420px; margin: 0 auto; width: 100%;
+      }
+      .cell {
+        appearance: none; cursor: pointer; padding: 4px 2px;
+        aspect-ratio: 1 / 1; border-radius: 2px;
+        border: 2px solid var(--line);
+        background: var(--tile-off-bg); color: var(--ink-faint);
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5%;
+        font: inherit; position: relative;
+        transition: background 0.12s ease, border-color 0.12s ease;
+        -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        user-select: none; -webkit-user-select: none;
+      }
+      /* OFF state: hollow ring — readable by shape alone */
+      .cell .dot {
+        width: 34%; height: 34%; border-radius: 50%; flex: 0 0 auto;
+        border: 3px solid var(--gray); background: transparent;
+      }
+      .cell .word {
+        font-size: clamp(8px, 2.4vw, 11px); font-weight: 800;
+        letter-spacing: 0.14em; text-transform: uppercase; line-height: 1;
+      }
+      /* ON state: yellow fill + hatched texture + filled disc — not colour alone */
+      .cell.on {
+        background:
+          repeating-linear-gradient(45deg, rgba(0,0,0,0.07) 0 6px, transparent 6px 12px),
+          var(--tile-on-bg);
+        border-color: var(--yellow-edge); color: #1a1a1b;
+      }
+      .cell.on .dot { background: #ffffff; border-color: #ffffff; box-shadow: 0 0 0 2px rgba(26,26,27,0.35); }
+      @media (prefers-color-scheme: dark) { .cell.on { color: #ffffff; } .cell.on .dot { box-shadow: 0 0 0 2px rgba(0,0,0,0.4); } }
+      /* Preview: cells that WILL flip get a green dashed outline and a ghost of their next state */
+      .cell.preview {
+        border-style: dashed; border-color: var(--green);
+        box-shadow: inset 0 0 0 2px var(--green);
+      }
+      .cell.preview .dot { opacity: 0.45; border-style: dashed; }
+      .cell.preview.on .dot { background: transparent; box-shadow: none; border-color: #1a1a1b; }
+      .cell.preview:not(.on) { background: color-mix(in srgb, var(--yellow) 28%, var(--tile-off-bg)); }
+      .cell.preview .word { color: var(--green-dark); }
+      @media (prefers-color-scheme: dark) { .cell.preview .word { color: #8fce8a; } }
+      .cell.preview.locked { border-style: solid; }
+      /* Hint: solid green border in Wordle green */
+      .cell.hint { border-color: var(--green); box-shadow: inset 0 0 0 2px var(--green); animation: hintPulse 1s ease-in-out infinite; }
+      @keyframes hintPulse {
+        0%, 100% { box-shadow: inset 0 0 0 2px var(--green); }
+        50% { box-shadow: inset 0 0 0 5px var(--green); }
+      }
+      .cell:disabled { cursor: default; }
+
+      /* Legend: shape + texture key */
+      .legend {
+        display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center;
+        max-width: 420px; margin: 12px auto 0;
+        font-size: 12px; font-weight: 600; color: var(--ink-soft);
+      }
+      .legend .item { display: inline-flex; align-items: center; gap: 7px; }
+      .swatch { width: 20px; height: 20px; border: 2px solid var(--line); display: inline-flex; align-items: center; justify-content: center; border-radius: 2px; flex: 0 0 auto; }
+      .swatch i { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--gray); display: block; }
+      .swatch.on { background: repeating-linear-gradient(45deg, rgba(0,0,0,0.07) 0 4px, transparent 4px 8px), var(--tile-on-bg); border-color: var(--yellow-edge); }
+      .swatch.on i { background: #fff; border-color: #fff; box-shadow: 0 0 0 1px rgba(26,26,27,0.35); }
+      .swatch.flip { border: 2px dashed var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+      .swatch.flip i { border-style: dashed; opacity: 0.5; }
+
+      /* Preview / hint panels */
+      .notice {
+        display: none; max-width: 420px; margin: 14px auto 0;
+        border: 1px solid var(--line); background: var(--panel);
+        padding: 12px 14px; font-size: 14px; line-height: 1.55; color: var(--ink-soft);
+      }
+      .notice.show { display: block; }
+      .notice strong { color: var(--ink); }
+      .notice .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+      .notice .btn { padding: 8px 12px; font-size: 12px; }
+      #hintBox { background: var(--hint-bg); border-color: var(--hint-edge); }
+      #previewBar { border-color: var(--green); }
+
+      .progress { height: 6px; background: var(--line); max-width: 420px; margin: 16px auto 0; }
+      .progress i { display: block; height: 100%; width: 0%; background: var(--green); transition: width 0.25s ease; }
+      .progress-note { text-align: center; color: var(--ink-soft); font-size: 13.5px; margin: 8px auto 0; min-height: 1.3em; max-width: 420px; }
+
+      .under { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 14px; }
+
+      /* ---------- Win banner ---------- */
+      .win {
+        display: none; margin: 18px auto 0; max-width: 420px;
+        background: var(--good-bg); border: 1px solid var(--green);
+        padding: 18px 20px; text-align: center;
+      }
+      .win.show { display: block; }
+      .win h2 { font-family: "Zilla Slab", Georgia, serif; font-weight: 700; font-size: 26px; margin: 0 0 4px; }
+      .win p { margin: 0 0 14px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.55; }
+      .win p strong { color: var(--ink); }
+      .win .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+      .win .btn.next { background: var(--green); color: #fff; font-size: 14px; padding: 12px 20px; }
+      .win .btn.next:hover { background: var(--green-dark); }
+
+      /* ---------- How to play ---------- */
+      .howto { margin: 30px auto 0; max-width: 420px; border-top: 1px solid var(--line); padding-top: 18px; }
+      .howto h2 { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; margin: 0 0 10px; font-weight: 800; }
+      .howto ol, .howto ul { margin: 0; padding-left: 20px; color: var(--ink-soft); font-size: 14.5px; line-height: 1.65; }
+      .howto strong { color: var(--ink); }
+      .howto .tip { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+      footer { text-align: center; margin-top: 26px; color: var(--ink-faint); font-size: 12.5px; }
+
+      /* ---------- Header icon button ---------- */
+      .mast-right { display: flex; align-items: center; gap: 10px; }
+      .icon-btn {
+        appearance: none; background: none; border: 0; cursor: pointer;
+        color: var(--ink); padding: 6px; line-height: 0; border-radius: 4px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .icon-btn:hover { color: var(--green-dark); }
+      .icon-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      .icon-btn svg { width: 22px; height: 22px; display: block; }
+
+      /* ---------- Statistics modal (NYT Wordle style) ---------- */
+      .overlay {
+        display: none; position: fixed; inset: 0; z-index: 60;
+        background: rgba(0, 0, 0, 0.45);
+        align-items: flex-start; justify-content: center;
+        padding: 24px 12px; overflow-y: auto;
+      }
+      .overlay.show { display: flex; }
+      .modal {
+        background: var(--bg); color: var(--ink);
+        width: 100%; max-width: 440px;
+        border: 1px solid var(--line);
+        padding: 30px 24px 20px; position: relative;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+        animation: modalIn 0.18s ease;
+      }
+      @keyframes modalIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+      .modal-close {
+        position: absolute; top: 6px; right: 6px;
+        appearance: none; background: none; border: 0; cursor: pointer;
+        color: var(--ink-soft); padding: 8px; line-height: 0; border-radius: 4px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .modal-close:hover { color: var(--ink); }
+      .modal-close:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+      .modal-close svg { width: 18px; height: 18px; display: block; }
+      .modal h2 {
+        font-size: 14px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+        text-align: center; margin: 0 0 16px;
+      }
+      .modal h3 {
+        font-size: 13px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+        margin: 24px 0 10px;
+      }
+      .mstats { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
+      .mstats .v { font-size: 32px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+      .mstats .k { font-size: 11px; color: var(--ink-soft); margin-top: 2px; line-height: 1.3; }
+      .modal-note { font-size: 12px; color: var(--ink-faint); line-height: 1.5; margin: 10px 0 0; }
+      .modal-note.center { text-align: center; margin-top: 18px; }
+
+      /* Distribution histogram */
+      .dist-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+      .dist-row .dl {
+        width: 62px; flex: 0 0 auto; text-align: right;
+        font-size: 13px; font-weight: 700; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+      }
+      .dist-row .bar {
+        background: var(--gray); color: #fff;
+        font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+        text-align: right; padding: 2px 7px 2px 4px;
+        min-width: 26px; height: 20px; line-height: 16px;
+      }
+      .dist-row .bar.hot { background: var(--green); }
+
+      /* Badges shelf */
+      .badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .badge {
+        border: 1px solid var(--line); padding: 12px 6px 10px;
+        display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center;
+      }
+      .badge-icon {
+        width: 42px; height: 42px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--green); color: #fff;
+      }
+      .badge-icon svg { width: 22px; height: 22px; }
+      .badge-name { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.25; }
+      .badge-how { font-size: 11px; color: var(--ink-soft); line-height: 1.35; }
+      .badge-state { font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green-dark); }
+      @media (prefers-color-scheme: dark) { .badge-state { color: #8fce8a; } }
+      /* Locked: grayed, with how to earn it */
+      .badge.locked .badge-icon { background: var(--key); color: var(--ink-faint); }
+      .badge.locked .badge-name { color: var(--ink-faint); }
+      .badge.locked .badge-how { color: var(--ink-faint); }
+      /* Earned streak badge that a higher streak badge has topped: kept, but not highlighted */
+      .badge.superseded .badge-icon { background: var(--bg); color: var(--gray); border: 2px solid var(--line-dark); }
+      .badge.superseded .badge-name { color: var(--ink-soft); }
+      .badge.superseded .badge-state { color: var(--ink-faint); }
+      /* The highest earned streak badge gets the highlight ring */
+      .badge.top-streak .badge-icon { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4.5px var(--green); }
+
+      /* ---------- Badge unlock toast ---------- */
+      .toasts {
+        position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+        z-index: 80; width: min(92vw, 380px);
+        display: flex; flex-direction: column; gap: 8px; align-items: stretch;
+        pointer-events: none;
+      }
+      .toast {
+        display: flex; align-items: center; gap: 11px;
+        background: #1a1a1b; color: #ffffff;
+        padding: 11px 14px; font-size: 13.5px; line-height: 1.4;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.3);
+        opacity: 0; transform: translateY(-8px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+      }
+      @media (prefers-color-scheme: dark) { .toast { background: #f6f7f8; color: #1a1a1b; } }
+      .toast.in { opacity: 1; transform: none; }
+      .toast strong { text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+      .toast-icon { color: var(--yellow); display: flex; flex: 0 0 auto; }
+      .toast-icon svg { width: 22px; height: 22px; }
+
+      @media (max-width: 430px) {
+        .masthead .puzzle-no { display: none; }
+        .mstats .v { font-size: 27px; }
+        .badges { gap: 7px; }
+      }
+
+      .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 40; }
+      .confetti span { position: absolute; top: -14px; animation: fall linear forwards; }
+      @keyframes fall { to { transform: translateY(108vh) rotate(680deg); opacity: 0.9; } }
+
+      @media (max-width: 430px) {
+        .stat .v { font-size: 20px; }
+        .seg button, .btn { padding: 9px 10px; font-size: 12px; }
+        .masthead .brand, .masthead .puzzle-no { letter-spacing: 0.1em; font-size: 9px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .cell, .progress i, .btn, .seg button { transition: none; }
+        .cell.hint { animation: none; }
+        .modal { animation: none; }
+        .toast { transition: none; }
+        .confetti { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="masthead">
+        <span class="brand">Benjamin&rsquo;s Games</span>
+        <h1>Buttons</h1>
+        <span class="mast-right">
+          <span class="puzzle-no" id="boardLabel">5 × 5 · Classic</span>
+          <button class="icon-btn" id="statsBtn" type="button" aria-label="Statistics" title="Statistics">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="11" width="4" height="9"/><rect x="10" y="4" width="4" height="16"/><rect x="16" y="8" width="4" height="12"/></svg>
+          </button>
+        </span>
+      </div>
+      <p class="tagline">Press a button and it flips itself and its neighbours. Work the board until <strong>every tile is off</strong>. Hover or press-and-hold any tile to preview its flips first.</p>
+
+      <div class="controls" role="group" aria-label="Board size">
+        <div class="seg" id="sizeSeg">
+          <button type="button" data-size="3" aria-pressed="false">3 × 3</button>
+          <button type="button" data-size="4" aria-pressed="false">4 × 4</button>
+          <button type="button" data-size="5" aria-pressed="true">5 × 5</button>
+          <button type="button" data-size="6" aria-pressed="false">6 × 6</button>
+        </div>
+        <button class="btn primary" id="newGameBtn" type="button">New board</button>
+      </div>
+
+      <div class="stats" aria-label="Game statistics">
+        <div class="stat"><div class="v" id="statMoves">0</div><div class="k">Moves</div></div>
+        <div class="stat"><div class="v" id="statLights">0</div><div class="k">Lights on</div></div>
+        <div class="stat"><div class="v" id="statTime">0:00</div><div class="k">Time</div></div>
+        <div class="stat"><div class="v" id="statBest">&mdash;</div><div class="k">Fewest possible</div></div>
+      </div>
+
+      <div class="board-top">
+        <span class="lamp" id="lamp"><i></i><span id="lampText">Lights on</span></span>
+        <span>Goal · All off</span>
+      </div>
+      <div class="board" id="board" role="grid" aria-label="Button board"></div>
+
+      <div class="legend" aria-label="Tile legend">
+        <span class="item"><span class="swatch on"><i></i></span> Filled + hatched = <strong>&nbsp;On</strong></span>
+        <span class="item"><span class="swatch"><i></i></span> Hollow ring = <strong>&nbsp;Off</strong></span>
+        <span class="item"><span class="swatch flip"><i></i></span> Dashed green = <strong>&nbsp;Will flip</strong></span>
+      </div>
+
+      <div class="notice" id="previewBar" aria-live="polite">
+        <span id="previewText"></span>
+        <div class="row" id="previewActions" hidden>
+          <button class="btn primary" id="previewConfirm" type="button">Press this tile</button>
+          <button class="btn" id="previewCancel" type="button">Cancel</button>
+        </div>
+      </div>
+
+      <div class="notice" id="hintBox" aria-live="polite">
+        <strong>Why this press helps</strong>
+        <div id="hintText"></div>
+      </div>
+
+      <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+      <p class="progress-note" id="progressNote"></p>
+
+      <div class="under">
+        <button class="btn" id="undoBtn" type="button" disabled title="Step back one press. Tap again to keep stepping back — all the way to the start.">Undo <span class="count" id="undoCount" hidden>0</span></button>
+        <button class="btn" id="resetBtn" type="button" disabled>Restart</button>
+        <button class="btn" id="hintBtn" type="button">Hint</button>
+        <button class="btn" id="soundBtn" type="button" aria-pressed="true"><span id="soundLabel">Sound on</span></button>
+      </div>
+
+      <section class="win" id="winBox" aria-live="polite">
+        <h2>All lights out!</h2>
+        <p id="winText"></p>
+        <div class="row">
+          <button class="btn next" id="againBtn" type="button">Next puzzle &rarr;</button>
+          <button class="btn" id="replayBtn" type="button">Replay this board</button>
+        </div>
+      </section>
+
+      <section class="howto">
+        <h2>How to play</h2>
+        <ol>
+          <li><strong>Preview before you press.</strong> Hover, focus, or press-and-hold a tile: every tile that would flip gets a dashed green outline and a ghost of its next state. Hold a tile a little longer to lock the preview, then confirm or cancel. Slide off or press Esc to back out.</li>
+          <li><strong>Press to flip</strong> the tile itself and the tiles directly above, below, left, and right.</li>
+          <li><strong>Read tiles by shape, not just colour.</strong> On tiles are filled, hatched, and say ON with a solid disc. Off tiles are plain with a hollow ring and say OFF.</li>
+          <li><strong>Undo steps back one press at a time</strong> — tap it repeatedly to rewind all the way to the starting board.</li>
+          <li><strong>Hint explains itself.</strong> It names a tile from a shortest solution and says why that press helps, not just where to press.</li>
+        </ol>
+        <p class="tip"><strong>A classic trick:</strong> work row by row from the top. To clear a lit tile, press the tile directly below it — the hint will point these chase moves out as they come up.</p>
+      </section>
+
+      <footer>Benjamin&rsquo;s Buttons — a Lights Out puzzle in the Wordle style.</footer>
+    </div>
+
+    <div class="overlay" id="statsOverlay">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+        <button class="modal-close" id="statsClose" type="button" aria-label="Close statistics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+        </button>
+        <h2 id="statsTitle">Statistics</h2>
+        <div class="mstats" aria-label="Lifetime statistics">
+          <div><div class="v" id="mPlayed">0</div><div class="k">Played</div></div>
+          <div><div class="v" id="mWinPct">0</div><div class="k">Win %</div></div>
+          <div><div class="v" id="mCur">0</div><div class="k">Current Streak</div></div>
+          <div><div class="v" id="mMax">0</div><div class="k">Max Streak</div></div>
+        </div>
+        <p class="modal-note">Streaks count games won in a row. Starting a new board mid-game counts as a loss.</p>
+        <h3>Win distribution</h3>
+        <div id="distRows"></div>
+        <p class="modal-note">Wins grouped by moves over the fewest possible for that board. The green bar is your most recent win.</p>
+        <h3>Badges</h3>
+        <div class="badges" id="badgeShelf"></div>
+        <p class="modal-note center">Statistics and badges are saved on this device only.</p>
+      </div>
+    </div>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var SIZE_LABELS = { 3: "Starter", 4: "Warming up", 5: "Classic", 6: "Expert" };
+        var SCRAMBLES = { 3: 5, 4: 8, 5: 12, 6: 16 };
+        var MIN_OPTIMAL = { 3: 3, 4: 4, 5: 6, 6: 8 };
+
+        var size = 5;
+        var board = [];
+        var initial = [];
+        var par = null;
+        var moves = 0;
+        var history = [];
+        var won = false;
+        var startedAt = null;
+        var elapsedBase = 0;
+        var timerId = null;
+        var soundOn = true;
+        var hintIndex = -1;
+        var sessionBest = {};
+
+        /* Preview state */
+        var previewIndex = -1;
+        var previewLocked = false;
+        var downIndex = -1;
+        var downAt = 0;
+        var longTimer = null;
+        var suppressClick = false;
+
+        var boardEl = document.getElementById("board");
+        var statMoves = document.getElementById("statMoves");
+        var statLights = document.getElementById("statLights");
+        var statTime = document.getElementById("statTime");
+        var statBest = document.getElementById("statBest");
+        var undoBtn = document.getElementById("undoBtn");
+        var undoCount = document.getElementById("undoCount");
+        var resetBtn = document.getElementById("resetBtn");
+        var hintBtn = document.getElementById("hintBtn");
+        var winBox = document.getElementById("winBox");
+        var winText = document.getElementById("winText");
+        var lamp = document.getElementById("lamp");
+        var lampText = document.getElementById("lampText");
+        var boardLabel = document.getElementById("boardLabel");
+        var progressBar = document.getElementById("progressBar");
+        var progressNote = document.getElementById("progressNote");
+        var previewBar = document.getElementById("previewBar");
+        var previewText = document.getElementById("previewText");
+        var previewActions = document.getElementById("previewActions");
+        var hintBox = document.getElementById("hintBox");
+        var hintText = document.getElementById("hintText");
+
+        /* ---------------- Lifetime statistics & badges (saved on this device) ---------------- */
+        var STATS_KEY = "benjamins-buttons-stats-v1";
+        var DIST_LABELS = ["Perfect", "+1–2", "+3–5", "+6+"];
+        var attempted = false;     /* a press has been made on the current board */
+        var gameCounted = false;   /* the current board's result is already recorded */
+        var lastWinBucket = -1;    /* distribution bucket of the most recent win */
+
+        var BADGES = [
+          { id: "first-win", name: "First Win", how: "Win your first game", icon: "star" },
+          { id: "perfect", name: "Perfect Clear", how: "Win in the fewest possible moves", icon: "target" },
+          { id: "streak-3", name: "Streak 3", how: "Win 3 games in a row", icon: "flame", streak: 3 },
+          { id: "streak-7", name: "Streak 7", how: "Win 7 games in a row", icon: "flame", streak: 7 },
+          { id: "streak-14", name: "Streak 14", how: "Win 14 games in a row", icon: "flame", streak: 14 },
+          { id: "streak-30", name: "Streak 30", how: "Win 30 games in a row", icon: "flame", streak: 30 },
+          { id: "played-10", name: "10 Games", how: "Play 10 games", icon: "medal" },
+          { id: "played-50", name: "50 Games", how: "Play 50 games", icon: "medal" },
+          { id: "played-100", name: "100 Games", how: "Play 100 games", icon: "medal" }
+        ];
+
+        function defaultStats() {
+          return { played: 0, wins: 0, cur: 0, max: 0, dist: [0, 0, 0, 0], perfect: 0, badges: {} };
+        }
+        function loadStats() {
+          try {
+            var raw = localStorage.getItem(STATS_KEY);
+            if (raw) {
+              var s = JSON.parse(raw);
+              if (s && typeof s.played === "number" && typeof s.wins === "number") {
+                var d = defaultStats();
+                d.played = s.played; d.wins = s.wins;
+                d.cur = s.cur || 0; d.max = s.max || 0; d.perfect = s.perfect || 0;
+                if (s.dist && s.dist.length === 4) d.dist = s.dist.map(function (n) { return n || 0; });
+                if (s.badges) d.badges = s.badges;
+                return d;
+              }
+            }
+          } catch (e) {}
+          return defaultStats();
+        }
+        var stats = loadStats();
+        function saveStats() {
+          try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+        }
+        function badgeEarned(b) {
+          if (b.id === "first-win") return stats.wins >= 1;
+          if (b.id === "perfect") return stats.perfect >= 1;
+          if (b.streak) return stats.max >= b.streak;
+          if (b.id.indexOf("played-") === 0) return stats.played >= parseInt(b.id.slice(7), 10);
+          return false;
+        }
+        /* Record a finished game once; returns any badges it newly unlocked. */
+        function recordEnd(didWin, over) {
+          if (gameCounted) return [];
+          gameCounted = true;
+          stats.played++;
+          if (didWin) {
+            stats.wins++;
+            stats.cur++;
+            if (stats.cur > stats.max) stats.max = stats.cur;
+            var bucket = over <= 0 ? 0 : (over <= 2 ? 1 : (over <= 5 ? 2 : 3));
+            stats.dist[bucket]++;
+            lastWinBucket = bucket;
+            if (over === 0) stats.perfect++;
+          } else {
+            stats.cur = 0;
+            lastWinBucket = -1;
+          }
+          var fresh = [];
+          BADGES.forEach(function (b) {
+            if (!stats.badges[b.id] && badgeEarned(b)) { stats.badges[b.id] = true; fresh.push(b); }
+          });
+          saveStats();
+          return fresh;
+        }
+        /* Giving up on a board you have started counts as a loss. */
+        function abandonIfNeeded() {
+          if (gameCounted || won || !attempted) return;
+          var fresh = recordEnd(false, 0);
+          if (fresh.length) showToasts(fresh);
+        }
+
+        function badgeIcon(kind) {
+          var open = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+          if (kind === "star") return open + '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor" stroke="none"/></svg>';
+          if (kind === "target") return open + '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>';
+          if (kind === "flame") return open + '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+          return open + '<circle cx="12" cy="8" r="6"/><path d="M15.5 12.9 17 22l-5-3-5 3 1.5-9.1"/></svg>';
+        }
+
+        var statsOverlay = document.getElementById("statsOverlay");
+        var distRows = document.getElementById("distRows");
+        var badgeShelf = document.getElementById("badgeShelf");
+        function renderStats() {
+          document.getElementById("mPlayed").textContent = stats.played;
+          document.getElementById("mWinPct").textContent = stats.played ? Math.round((stats.wins / stats.played) * 100) : 0;
+          document.getElementById("mCur").textContent = stats.cur;
+          document.getElementById("mMax").textContent = stats.max;
+          var maxCount = 1, i;
+          for (i = 0; i < 4; i++) if (stats.dist[i] > maxCount) maxCount = stats.dist[i];
+          distRows.innerHTML = "";
+          DIST_LABELS.forEach(function (label, idx) {
+            var row = document.createElement("div");
+            row.className = "dist-row";
+            var pct = Math.round((stats.dist[idx] / maxCount) * 100);
+            row.innerHTML = '<span class="dl">' + label + '</span><span class="bar' +
+              (idx === lastWinBucket ? " hot" : "") + '" style="width:' + pct + '%">' + stats.dist[idx] + "</span>";
+            distRows.appendChild(row);
+          });
+          /* Only the highest earned streak badge stays highlighted. */
+          var topStreak = 0;
+          BADGES.forEach(function (b) { if (b.streak && stats.badges[b.id] && b.streak > topStreak) topStreak = b.streak; });
+          badgeShelf.innerHTML = "";
+          BADGES.forEach(function (b) {
+            var earned = !!stats.badges[b.id];
+            var el = document.createElement("div");
+            var cls = "badge " + (earned ? "earned" : "locked");
+            if (b.streak && earned && b.streak < topStreak) cls += " superseded";
+            if (b.streak && earned && b.streak === topStreak) cls += " top-streak";
+            el.className = cls;
+            var state = !earned ? "Locked" : (b.streak && b.streak < topStreak ? "Earned · topped" : "Earned");
+            el.innerHTML = '<span class="badge-icon">' + badgeIcon(b.icon) + '</span>' +
+              '<span class="badge-name">' + b.name + "</span>" +
+              '<span class="badge-how">' + b.how + "</span>" +
+              '<span class="badge-state">' + state + "</span>";
+            badgeShelf.appendChild(el);
+          });
+        }
+        function openStats() {
+          renderStats();
+          statsOverlay.classList.add("show");
+          document.body.style.overflow = "hidden";
+          document.getElementById("statsClose").focus({ preventScroll: true });
+        }
+        function closeStats() {
+          statsOverlay.classList.remove("show");
+          document.body.style.overflow = "";
+        }
+
+        function showToast(badge) {
+          var box = document.getElementById("toasts");
+          var t = document.createElement("div");
+          t.className = "toast";
+          t.innerHTML = '<span class="toast-icon">' + badgeIcon(badge.icon) + "</span>" +
+            "<span><strong>Badge unlocked</strong><br>" + badge.name + " — " + badge.how + "</span>";
+          box.appendChild(t);
+          requestAnimationFrame(function () { requestAnimationFrame(function () { t.classList.add("in"); }); });
+          setTimeout(function () {
+            t.classList.remove("in");
+            setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+          }, 3600);
+        }
+        function showToasts(list) {
+          list.forEach(function (b, i) { setTimeout(function () { showToast(b); }, i * 300); });
+        }
+
+        /* ---------------- Solver (Gaussian elimination over GF(2)) ---------------- */
+        function solve(state, n) {
+          var N = n * n;
+          var rows = [];
+          var r, c, i;
+          for (r = 0; r < n; r++) {
+            for (c = 0; c < n; c++) {
+              i = r * n + c;
+              var mask = 0n;
+              var cells = [[r, c], [r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]];
+              for (var k = 0; k < cells.length; k++) {
+                var rr = cells[k][0], cc = cells[k][1];
+                if (rr >= 0 && rr < n && cc >= 0 && cc < n) mask |= (1n << BigInt(rr * n + cc));
+              }
+              rows.push({ mask: mask, aug: state[i] ? 1n : 0n });
+            }
+          }
+          var row = 0;
+          var pivotForCol = new Array(N).fill(-1);
+          for (var col = 0; col < N && row < N; col++) {
+            var sel = -1;
+            for (i = row; i < N; i++) { if ((rows[i].mask >> BigInt(col)) & 1n) { sel = i; break; } }
+            if (sel === -1) continue;
+            var tmp = rows[row]; rows[row] = rows[sel]; rows[sel] = tmp;
+            for (i = 0; i < N; i++) {
+              if (i !== row && ((rows[i].mask >> BigInt(col)) & 1n)) {
+                rows[i].mask ^= rows[row].mask; rows[i].aug ^= rows[row].aug;
+              }
+            }
+            pivotForCol[col] = row; row++;
+          }
+          for (i = 0; i < N; i++) if (rows[i].mask === 0n && rows[i].aug === 1n) return null;
+          var particular = 0n;
+          for (col = 0; col < N; col++) {
+            if (pivotForCol[col] !== -1 && rows[pivotForCol[col]].aug === 1n) particular |= (1n << BigInt(col));
+          }
+          var freeCols = [];
+          for (col = 0; col < N; col++) if (pivotForCol[col] === -1) freeCols.push(col);
+          var basis = freeCols.map(function (f) {
+            var v = (1n << BigInt(f));
+            for (var pc = 0; pc < N; pc++) {
+              if (pivotForCol[pc] !== -1 && ((rows[pivotForCol[pc]].mask >> BigInt(f)) & 1n)) v |= (1n << BigInt(pc));
+            }
+            return v;
+          });
+          var best = particular, bestWeight = popcount(particular);
+          var combos = Math.pow(2, basis.length);
+          if (combos <= 65536) {
+            for (var m = 1; m < combos; m++) {
+              var cand = particular;
+              for (var b = 0; b < basis.length; b++) if (m & (1 << b)) cand ^= basis[b];
+              var w = popcount(cand);
+              if (w < bestWeight) { best = cand; bestWeight = w; }
+            }
+          }
+          return { presses: best, count: bestWeight };
+        }
+        function popcount(x) { var n = 0; while (x) { x &= (x - 1n); n++; } return n; }
+
+        /* ---------------- Board mechanics ---------------- */
+        function neighbours(idx, n) {
+          var r = Math.floor(idx / n), c = idx % n, out = [idx];
+          if (r > 0) out.push(idx - n);
+          if (r < n - 1) out.push(idx + n);
+          if (c > 0) out.push(idx - 1);
+          if (c < n - 1) out.push(idx + 1);
+          return out;
+        }
+        function applyPress(state, idx, n) { neighbours(idx, n).forEach(function (j) { state[j] = !state[j]; }); }
+        function lightsOn(state) { return state.reduce(function (a, b) { return a + (b ? 1 : 0); }, 0); }
+        function coord(idx) { return "row " + (Math.floor(idx / size) + 1) + ", column " + ((idx % size) + 1); }
+        function coordShort(idx) { return "R" + (Math.floor(idx / size) + 1) + " C" + ((idx % size) + 1); }
+
+        function newGame() {
+          abandonIfNeeded();
+          var N = size * size, scrambles = SCRAMBLES[size], candidate, sol, tries = 0;
+          do {
+            candidate = new Array(N).fill(false);
+            var used = {};
+            for (var s = 0; s < scrambles; s++) {
+              var idx = Math.floor(Math.random() * N);
+              if (used[idx]) { s--; continue; }
+              used[idx] = true; applyPress(candidate, idx, size);
+            }
+            sol = solve(candidate, size); tries++;
+          } while ((!sol || sol.count < MIN_OPTIMAL[size] || lightsOn(candidate) < Math.ceil(N / 3)) && tries < 60);
+          initial = candidate.slice(); board = candidate.slice();
+          par = sol ? sol.count : null;
+          startFresh(); render();
+        }
+        function startFresh() {
+          moves = 0; history = []; won = false; startedAt = null; elapsedBase = 0;
+          attempted = false; gameCounted = false;
+          hintIndex = -1; clearPreview(true); hideHint(); stopTimer();
+          winBox.classList.remove("show");
+        }
+        function restart() { abandonIfNeeded(); board = initial.slice(); startFresh(); render(); blip(320); }
+
+        /* ---------------- Timer ---------------- */
+        function elapsedMs() { return startedAt === null ? elapsedBase : elapsedBase + (Date.now() - startedAt); }
+        function fmtTime(ms) {
+          var s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+          var ss = ("0" + (s % 60)).slice(-2);
+          return h > 0 ? h + ":" + ("0" + (m % 60)).slice(-2) + ":" + ss : m + ":" + ss;
+        }
+        function startTimer() { if (timerId === null) timerId = setInterval(function () { statTime.textContent = fmtTime(elapsedMs()); }, 250); }
+        function stopTimer() { if (timerId !== null) { clearInterval(timerId); timerId = null; } }
+
+        /* ---------------- Sound ---------------- */
+        var audioCtx = null;
+        function blip(freq) {
+          if (!soundOn) return;
+          try {
+            if (!audioCtx) { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; audioCtx = new AC(); }
+            if (audioCtx.state === "suspended") audioCtx.resume();
+            var t = audioCtx.currentTime, osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.type = "triangle"; osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(t); osc.stop(t + 0.1);
+          } catch (e) {}
+        }
+        function winChime() { [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { setTimeout(function () { blip(f); }, i * 110); }); }
+
+        /* ---------------- Preview ---------------- */
+        function previewSet() { return previewIndex < 0 ? [] : neighbours(previewIndex, size); }
+        function describePreview(idx) {
+          var set = neighbours(idx, size), off = 0, on = 0;
+          set.forEach(function (j) { if (board[j]) off++; else on++; });
+          var before = lightsOn(board), after = before - off + on;
+          return "<strong>Preview · " + coordShort(idx) + ":</strong> flips " + set.length +
+            " tiles (" + set.map(coordShort).join(", ") + ") — " + off + " on&rarr;off, " + on +
+            " off&rarr;on. Lights would go " + before + " &rarr; " + after + "." +
+            (previewLocked ? " Nothing is pressed yet — confirm below or cancel." : " Release a quick tap to press it, or hold to lock this preview.");
+        }
+        function showPreview(idx, locked) {
+          if (won || idx < 0) return;
+          previewIndex = idx; previewLocked = !!locked;
+          previewText.innerHTML = describePreview(idx);
+          previewBar.classList.add("show");
+          previewActions.hidden = !previewLocked;
+          render();
+        }
+        function clearPreview(silent) {
+          previewIndex = -1; previewLocked = false;
+          if (longTimer) { clearTimeout(longTimer); longTimer = null; }
+          if (!silent) { previewBar.classList.remove("show"); render(); }
+          else previewBar.classList.remove("show");
+        }
+        function hideHint() { hintBox.classList.remove("show"); }
+
+        /* ---------------- Interaction ---------------- */
+        function press(idx) {
+          if (won) return;
+          attempted = true;
+          clearPreview(true); hideHint(); hintIndex = -1;
+          applyPress(board, idx, size);
+          history.push(idx); moves++;
+          if (startedAt === null) { startedAt = Date.now(); startTimer(); }
+          blip(board[idx] ? 660 : 440);
+          if (lightsOn(board) === 0) onWin();
+          render();
+        }
+        function undo() {
+          if (!history.length || won) return;
+          var idx = history.pop();
+          applyPress(board, idx, size);
+          moves = Math.max(0, moves - 1);
+          hintIndex = -1; clearPreview(true); hideHint();
+          blip(300); render();
+        }
+        function showHint() {
+          if (won) return;
+          var sol = solve(board, size);
+          if (!sol || sol.count === 0) return;
+          var idx = -1;
+          for (var i = 0; i < size * size; i++) if ((sol.presses >> BigInt(i)) & 1n) { idx = i; break; }
+          if (idx < 0) return;
+          hintIndex = idx;
+          /* Build the explanation */
+          var set = neighbours(idx, size), offList = [], onList = [];
+          set.forEach(function (j) { (board[j] ? offList : onList).push(j); });
+          var r = Math.floor(idx / size), before = lightsOn(board);
+          var after = before - offList.length + onList.length;
+          var parts = [];
+          parts.push("Press <strong>" + coord(idx) + "</strong> (" + coordShort(idx) + ").");
+          if (r > 0 && board[idx - size]) {
+            parts.push("The tile directly above it, " + coordShort(idx - size) + ", is still lit — pressing the tile below a lit tile is the classic chase move, and it switches that one off.");
+          }
+          if (offList.length > onList.length) {
+            parts.push("It turns more tiles off than on: " + offList.length + " lit tile" + (offList.length === 1 ? "" : "s") + " (" + offList.map(coordShort).join(", ") + ") go off, against " + onList.length + " coming on, so the count drops " + before + " &rarr; " + after + ".");
+          } else if (offList.length) {
+            parts.push("It flips " + set.length + " tiles: " + offList.length + " on&rarr;off (" + offList.map(coordShort).join(", ") + ") and " + onList.length + " off&rarr;on, taking the count " + before + " &rarr; " + after + ". It still pays off — it is part of a shortest route from here, and some presses set up the row below before they pay back.");
+          } else {
+            parts.push("All " + set.length + " tiles it flips are currently off, so this is a set-up press: it is part of a shortest route from here even though the lit count rises first.");
+          }
+          if (r === size - 1) parts.push("It sits on the last row, where presses are how you settle whatever the rows above left behind.");
+          parts.push("From here the board can be finished in <strong>" + sol.count + " press" + (sol.count === 1 ? "" : "es") + "</strong> — this one included, so " + (sol.count - 1) + " remain after it.");
+          hintText.innerHTML = parts.join(" ");
+          hintBox.classList.add("show");
+          previewIndex = idx; previewLocked = false;
+          previewText.innerHTML = describePreview(idx);
+          previewBar.classList.add("show"); previewActions.hidden = true;
+          blip(760); render();
+          var cell = boardEl.children[idx];
+          if (cell) cell.focus({ preventScroll: true });
+        }
+        function onWin() {
+          won = true; elapsedBase = elapsedMs(); startedAt = null; stopTimer();
+          clearPreview(true);
+          if (sessionBest[size] === undefined || moves < sessionBest[size]) sessionBest[size] = moves;
+          var perfect = par !== null && moves === par;
+          var text = "Cleared the " + size + " × " + size + " board in <strong>" + moves + (moves === 1 ? " move" : " moves") + "</strong> and <strong>" + fmtTime(elapsedBase) + "</strong>.";
+          if (perfect) text += " That is the fewest moves this board can be solved in — a perfect clear.";
+          else if (par !== null) text += " The fewest possible for this board was " + par + ".";
+          text += " Your best on " + size + " × " + size + " this session: " + sessionBest[size] + " moves.";
+          winText.innerHTML = text;
+          document.getElementById("againBtn").textContent = "Next puzzle · " + size + " × " + size + " →";
+          winBox.classList.add("show"); winChime(); confetti();
+          var freshBadges = recordEnd(true, par === null ? 99 : moves - par);
+          if (freshBadges.length) showToasts(freshBadges);
+          setTimeout(function () { if (won) openStats(); }, freshBadges.length ? 1700 : 900);
+        }
+        function confetti() {
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          var box = document.getElementById("confetti"); box.innerHTML = "";
+          var colors = ["#538d4e", "#c9b458", "#787c7e", "#1a1a1b", "#d3d6da"];
+          for (var i = 0; i < 42; i++) {
+            var s = document.createElement("span"), sz = 6 + Math.random() * 7;
+            s.style.left = (Math.random() * 100) + "vw";
+            s.style.width = sz + "px"; s.style.height = (sz * (0.5 + Math.random() * 0.9)) + "px";
+            s.style.background = colors[i % colors.length];
+            s.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
+            s.style.animationDelay = (Math.random() * 0.5) + "s";
+            box.appendChild(s);
+          }
+          setTimeout(function () { box.innerHTML = ""; }, 4200);
+        }
+
+        /* ---------------- Rendering ---------------- */
+        function buildCells() {
+          boardEl.innerHTML = "";
+          boardEl.style.gridTemplateColumns = "repeat(" + size + ", 1fr)";
+          for (var i = 0; i < size * size; i++) {
+            (function (idx) {
+              var b = document.createElement("button");
+              b.type = "button"; b.className = "cell"; b.setAttribute("role", "gridcell");
+              var dot = document.createElement("span"); dot.className = "dot"; dot.setAttribute("aria-hidden", "true");
+              var word = document.createElement("span"); word.className = "word"; word.setAttribute("aria-hidden", "true");
+              b.appendChild(dot); b.appendChild(word);
+              b.addEventListener("click", function () {
+                if (suppressClick) { suppressClick = false; return; }
+                if (previewLocked && previewIndex === idx) return;
+                press(idx);
+              });
+              b.addEventListener("pointerenter", function (e) {
+                if (e.pointerType === "mouse" || e.pointerType === "pen") showPreview(idx, previewLocked && previewIndex === idx);
+              });
+              b.addEventListener("pointerleave", function () {
+                if (!previewLocked && downIndex !== idx) clearPreview();
+                if (downIndex === idx && !previewLocked) downIndex = -1;
+              });
+              b.addEventListener("focus", function () { if (previewIndex !== idx) showPreview(idx, false); });
+              b.addEventListener("blur", function () { if (!previewLocked && previewIndex === idx) clearPreview(); });
+              b.addEventListener("pointerdown", function () {
+                downIndex = idx; downAt = Date.now(); showPreview(idx, false);
+                if (longTimer) clearTimeout(longTimer);
+                longTimer = setTimeout(function () {
+                  if (downIndex === idx && !won) { suppressClick = true; showPreview(idx, true); blip(700); }
+                }, 480);
+              });
+              b.addEventListener("pointerup", function () {
+                if (longTimer) { clearTimeout(longTimer); longTimer = null; }
+                downIndex = -1;
+              });
+              b.addEventListener("pointercancel", function () {
+                if (longTimer) { clearTimeout(longTimer); longTimer = null; }
+                downIndex = -1; if (!previewLocked) clearPreview();
+              });
+              b.addEventListener("contextmenu", function (e) { e.preventDefault(); showPreview(idx, true); });
+              boardEl.appendChild(b);
+            })(i);
+          }
+        }
+        function render() {
+          var set = previewSet(), cells = boardEl.children;
+          for (var i = 0; i < cells.length; i++) {
+            var on = board[i], isPreview = set.indexOf(i) !== -1;
+            cells[i].classList.toggle("on", on);
+            cells[i].classList.toggle("preview", isPreview);
+            cells[i].classList.toggle("locked", isPreview && previewLocked);
+            cells[i].classList.toggle("hint", i === hintIndex);
+            cells[i].disabled = won;
+            var word = cells[i].querySelector(".word");
+            if (word) word.textContent = isPreview ? (on ? "→ Off" : "→ On") : (on ? "On" : "Off");
+            cells[i].setAttribute("aria-label",
+              "Row " + (Math.floor(i / size) + 1) + ", column " + ((i % size) + 1) + ", light " + (on ? "on" : "off") +
+              (isPreview ? ", will flip if pressed" : ""));
+          }
+          var onCount = lightsOn(board), total = size * size;
+          statMoves.textContent = moves;
+          statLights.textContent = onCount;
+          statTime.textContent = fmtTime(elapsedMs());
+          statBest.textContent = par === null ? "—" : par;
+          boardLabel.textContent = size + " × " + size + " · " + SIZE_LABELS[size];
+          lampText.textContent = won ? "All out" : (onCount + (onCount === 1 ? " light on" : " lights on"));
+          lamp.classList.toggle("done", won);
+          var pct = total ? Math.round(((total - onCount) / total) * 100) : 0;
+          progressBar.style.width = pct + "%";
+          progressNote.textContent = won ? "Board cleared." :
+            (moves === 0 ? onCount + " of " + total + " lights are on. Hover or hold a tile to preview, then press." :
+              pct + "% of the board is dark — " + onCount + " to go." + (history.length ? " Undo can step back " + history.length + (history.length === 1 ? " press." : " presses.") : ""));
+          undoBtn.disabled = history.length === 0 || won;
+          undoCount.hidden = history.length === 0;
+          undoCount.textContent = history.length;
+          resetBtn.disabled = moves === 0;
+          hintBtn.disabled = won;
+        }
+
+        /* ---------------- Wiring ---------------- */
+        document.getElementById("newGameBtn").addEventListener("click", function () { blip(520); newGame(); });
+        document.getElementById("againBtn").addEventListener("click", function () { blip(520); newGame(); });
+        document.getElementById("replayBtn").addEventListener("click", restart);
+        document.getElementById("previewConfirm").addEventListener("click", function () { var idx = previewIndex; if (idx >= 0) press(idx); });
+        document.getElementById("previewCancel").addEventListener("click", function () { clearPreview(); });
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && previewLocked) clearPreview(); });
+        document.getElementById("statsBtn").addEventListener("click", function () { blip(520); openStats(); });
+        document.getElementById("statsClose").addEventListener("click", closeStats);
+        statsOverlay.addEventListener("click", function (e) { if (e.target === statsOverlay) closeStats(); });
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && statsOverlay.classList.contains("show")) closeStats(); });
+        resetBtn.addEventListener("click", restart);
+        undoBtn.addEventListener("click", undo);
+        hintBtn.addEventListener("click", showHint);
+        var soundBtn = document.getElementById("soundBtn");
+        soundBtn.addEventListener("click", function () {
+          soundOn = !soundOn;
+          soundBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+          document.getElementById("soundLabel").textContent = soundOn ? "Sound on" : "Sound off";
+          if (soundOn) blip(660);
+        });
+        var seg = document.getElementById("sizeSeg");
+        seg.addEventListener("click", function (e) {
+          var btn = e.target.closest("button[data-size]");
+          if (!btn) return;
+          var newSize = parseInt(btn.getAttribute("data-size"), 10);
+          if (newSize === size) return;
+          size = newSize;
+          Array.prototype.forEach.call(seg.children, function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+          buildCells(); newGame();
+        });
+
+        buildCells();
+        newGame();
+      })();
+    </script>
+  </body>
+</html>

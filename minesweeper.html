@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Benjamin's Minesweeper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg:#ffffff; --ink:#1a1a1b; --ink-soft:#787c7e; --ink-faint:#a3a6a8;
+        --line:#d3d6da; --line-dark:#878a8c;
+        --green:#538d4e; --green-bright:#6aaa64; --yellow:#c9b458; --gray:#787c7e;
+        --tile:#d3d6da; --tile-hover:#bfc3c7; --revealed:#ffffff;
+        --green-bg:#e9f2e7; --yellow-bg:#faf3d7; --bad-bg:#f4f4f4;
+        --focus:#538d4e;
+        --n1:#538d4e; --n2:#a68d2c; --n3:#787c7e; --n4:#1a1a1b; --n5:#3d6b39; --n6:#8a7a2a; --n7:#45484a; --n8:#6b6e70;
+      }
+      @media (prefers-color-scheme:dark){
+        :root{
+          --bg:#121213; --ink:#ffffff; --ink-soft:#818384; --ink-faint:#565f6e;
+          --line:#3a3a3c; --line-dark:#818384;
+          --tile:#3a3a3c; --tile-hover:#4c4c4e; --revealed:#121213;
+          --green-bg:#1d2a1b; --yellow-bg:#35301b; --bad-bg:#1d1d1f;
+          --focus:#6aaa64;
+          --n1:#6aaa64; --n2:#c9b458; --n3:#a9abad; --n4:#ffffff; --n5:#8fce8a; --n6:#d8c56a; --n7:#e3e4e5; --n8:#818384;
+        }
+      }
+      *{box-sizing:border-box} html{-webkit-text-size-adjust:100%}
+      body{margin:0;font-family:"Libre Franklin","Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh}
+      .wrap{max-width:880px;margin:0 auto;padding:0 16px 56px}
+
+      /* NYT-style header: centered serif title over a thin rule */
+      header{position:relative;border-bottom:1px solid var(--line);padding:18px 0 14px;text-align:center;margin-bottom:16px}
+      h1{font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:clamp(30px,7vw,40px);line-height:1.05;margin:0 0 6px;letter-spacing:.01em}
+      .tagline{margin:0 auto;max-width:54ch;color:var(--ink-soft);font-size:14.5px;line-height:1.5}
+      .tagline strong{color:var(--ink)}
+
+      /* Flat controls */
+      .controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin:0 0 12px}
+      .seg{display:inline-flex;background:var(--bg);border:1px solid var(--line-dark);border-radius:999px;padding:2px;gap:2px;flex-wrap:wrap;justify-content:center}
+      .seg button{appearance:none;border:0;background:transparent;cursor:pointer;font:inherit;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);padding:7px 13px;border-radius:999px;line-height:1}
+      .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+      .btn{appearance:none;cursor:pointer;font:inherit;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1;border-radius:999px;padding:10px 16px;border:1px solid var(--ink);background:var(--bg);color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+      .btn.primary{background:var(--ink);color:var(--bg)}
+      .btn:active{transform:translateY(1px)}
+      .btn:disabled{opacity:.4;cursor:default}
+      .btn:focus-visible,.seg button:focus-visible,.cell:focus-visible,.face-btn:focus-visible,.mode-toggle:focus-visible,.zoom-btn:focus-visible,.icon-btn:focus-visible,.modal-close:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+      /* Sticky mode banner: current mode + flags remaining, always visible */
+      .mode-banner{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--green);background:var(--green-bg);color:var(--ink);border-radius:6px;padding:9px 12px;margin-bottom:12px}
+      .mode-banner[data-mode="flag"]{border-color:var(--yellow);background:var(--yellow-bg)}
+      .mode-dot{width:11px;height:11px;border-radius:2px;background:var(--green);flex:0 0 auto}
+      .mode-banner[data-mode="flag"] .mode-dot{background:var(--yellow)}
+      .mode-text{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+      .mode-flags{font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-left:auto;font-variant-numeric:tabular-nums}
+      .mode-toggle{appearance:none;cursor:pointer;font:inherit;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--ink);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 12px;line-height:1}
+      .mode-banner[data-mode="flag"] .mode-toggle{background:var(--yellow);border-color:var(--yellow);color:#1a1a1b}
+
+      /* Stats strip: thin rules, tabular numbers, uppercase labels */
+      .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;background:var(--bg)}
+      .stat{padding:9px 6px 8px;text-align:center}
+      .stat + .stat{border-left:1px solid var(--line)}
+      .stat .v{font-size:21px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+      .stat .k{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-top:3px}
+      /* Expert on phones: stats stay fixed under the mode banner while the board scrolls */
+      @media (max-width:760px){
+        .is-expert .stats{position:sticky;top:47px;z-index:29}
+      }
+
+      .board-frame{border:1px solid var(--line);border-radius:8px;padding:14px clamp(10px,2.5vw,18px) 16px}
+      .board-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 2px 12px;color:var(--ink-soft);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+      .lamp{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+      .lamp i{width:9px;height:9px;border-radius:2px;background:var(--green);display:inline-block;flex:0 0 auto}
+      .lamp.done i{background:var(--green)}
+      .lamp.dead i{background:var(--ink)}
+      .lamp:not(.done):not(.dead) i{background:var(--yellow)}
+      .face-btn{appearance:none;border:2px solid var(--ink);background:var(--bg);color:var(--ink);width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:20px;line-height:1;display:grid;place-items:center;flex:0 0 auto}
+      .face-btn:active{transform:translateY(1px)}
+      .board-scroll{overflow:auto;-webkit-overflow-scrolling:touch;padding:2px}
+      .board{display:grid;gap:4px;width:max-content;margin:0 auto}
+      .board.dense{gap:3px}
+      .cell{appearance:none;cursor:pointer;padding:0;border:2px solid var(--tile);border-radius:4px;background:var(--tile);position:relative;display:grid;place-items:center;font-weight:800;line-height:1;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none;color:var(--ink)}
+      .cell:not(.revealed):not(.flagged):hover{background:var(--tile-hover);border-color:var(--tile-hover)}
+      .cell.revealed{background:var(--revealed);border-color:var(--line);cursor:default}
+      .cell.flagged{background:var(--yellow);border-color:var(--yellow);color:#1a1a1b}
+      .cell.mine{background:var(--gray);border-color:var(--gray);color:#fff}
+      .cell.mine.exploded{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+      .cell.wrong-flag{background:var(--revealed);border-color:var(--line);color:var(--gray)}
+      .cell.hint-cell{animation:hintPulse .9s ease-in-out infinite}
+      @keyframes hintPulse{0%,100%{box-shadow:0 0 0 3px var(--green)}50%{box-shadow:0 0 0 3px transparent}}
+      .cell .num{font-size:17px}
+      .board.dense .cell .num{font-size:14px}
+      .cell[data-n="1"] .num{color:var(--n1)} .cell[data-n="2"] .num{color:var(--n2)} .cell[data-n="3"] .num{color:var(--n3)} .cell[data-n="4"] .num{color:var(--n4)} .cell[data-n="5"] .num{color:var(--n5)} .cell[data-n="6"] .num{color:var(--n6)} .cell[data-n="7"] .num{color:var(--n7)} .cell[data-n="8"] .num{color:var(--n8)}
+      .flag-icon{font-size:15px;line-height:1}
+      .mine-icon{font-size:15px;line-height:1}
+
+      .zoombar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:14px}
+      .zoombar .zlabel{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+      .zoom-btn{appearance:none;cursor:pointer;font:inherit;font-size:14px;font-weight:800;line-height:1;width:34px;height:34px;border-radius:50%;border:1px solid var(--line-dark);background:var(--bg);color:var(--ink);display:grid;place-items:center}
+      .zoom-btn.reset{width:auto;border-radius:999px;padding:0 13px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+      .zoom-val{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;min-width:44px;text-align:center}
+
+      .under{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+      .note{text-align:center;color:var(--ink-soft);font-size:13.5px;margin:12px 0 0;min-height:1.3em}
+
+      .banner{display:none;margin-top:18px;border-radius:8px;padding:20px;text-align:center}
+      .banner.show{display:block}
+      .banner.win{background:var(--green-bg);border:1px solid var(--green)}
+      .banner.lose{background:var(--bad-bg);border:1px solid var(--line-dark)}
+      .banner h2{font-family:"DM Serif Display",Georgia,serif;font-weight:400;font-size:28px;margin:0 0 6px}
+      .banner p{margin:0 0 10px;color:var(--ink-soft);font-size:15px;line-height:1.55}
+      .banner p strong{color:var(--ink)}
+      .banner .accuracy{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+      .banner .accuracy strong{color:var(--green)}
+      .banner.lose .accuracy strong{color:var(--ink)}
+
+      .howto{margin-top:30px;border-top:1px solid var(--line);padding-top:20px}
+      .howto h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 12px;color:var(--ink);font-weight:800}
+      .howto ol,.howto ul{margin:0;padding-left:20px;color:var(--ink-soft);font-size:14.5px;line-height:1.65}
+      .howto strong{color:var(--ink)}
+      .howto .tip{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--ink-soft);font-size:14px;line-height:1.6}
+      /* Header statistics icon (NYT-style bar chart) */
+      .icon-btn{position:absolute;top:16px;right:0;appearance:none;cursor:pointer;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-dark);background:var(--bg);color:var(--ink);display:grid;place-items:center;padding:0}
+      .icon-btn:active{transform:translateY(1px)}
+      @media (max-width:560px){header{padding-left:46px;padding-right:46px}}
+
+      /* Statistics modal (NYT Wordle style) */
+      .modal-backdrop{position:fixed;inset:0;z-index:60;background:rgba(18,18,19,.52);display:none;align-items:flex-start;justify-content:center;padding:22px 12px;overflow-y:auto}
+      .modal-backdrop.show{display:flex}
+      .modal{background:var(--bg);color:var(--ink);width:100%;max-width:540px;border:1px solid var(--line);border-radius:10px;padding:24px 22px 20px;position:relative;box-shadow:0 12px 34px rgba(0,0,0,.28)}
+      .modal h2{font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;text-align:center;margin:0 0 14px}
+      .modal h3{font-size:12.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin:22px 0 4px}
+      .modal h3 .sub-count{color:var(--ink-soft);letter-spacing:.04em;text-transform:none}
+      .modal-close{position:absolute;top:10px;right:10px;appearance:none;cursor:pointer;width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:var(--ink-soft);font-size:19px;line-height:1;display:grid;place-items:center;padding:0}
+      .modal-close:hover{color:var(--ink);background:var(--bad-bg)}
+      .modal-seg-wrap{text-align:center;margin-bottom:16px}
+      .mstats{display:grid;grid-template-columns:repeat(4,1fr);text-align:center}
+      .mstat .v{font-size:34px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+      .mstat .k{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-top:4px;line-height:1.35}
+      .modal-sub{margin:0 0 10px;color:var(--ink-soft);font-size:12.5px;line-height:1.5}
+      .dist-row{display:flex;align-items:center;gap:9px;margin:5px 0}
+      .dist-row .dl{flex:0 0 62px;text-align:right;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+      .dist-row .bar{min-height:20px;background:var(--gray);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;padding:2px 7px;border-radius:2px;font-variant-numeric:tabular-nums}
+      .dist-row .bar.current{background:var(--green)}
+      .badge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+      @media (max-width:520px){.badge-grid{grid-template-columns:repeat(2,1fr)}}
+      .badge{border:1px solid var(--line);border-radius:8px;padding:12px 8px 10px;text-align:center}
+      .badge .medal{width:46px;height:46px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center;background:var(--green);color:#fff;font-weight:800;font-size:16px}
+      .badge.clean .medal{background:var(--yellow);color:#1a1a1b}
+      .badge.expert .medal{background:var(--ink);color:var(--bg)}
+      .badge.locked .medal{background:var(--tile);color:var(--ink-faint)}
+      .badge.locked .bname{color:var(--ink-soft)}
+      .badge.locked .bdesc{color:var(--ink-faint)}
+      .badge.superseded .medal{background:var(--bad-bg);color:var(--ink-soft);border:2px solid var(--line-dark);width:42px;height:42px}
+      .badge .bname{font-size:13px;font-weight:800;line-height:1.25}
+      .badge .bdesc{font-size:11.5px;line-height:1.45;color:var(--ink-soft);margin-top:3px}
+      .badge .btag{display:inline-block;margin-top:7px;font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;border-radius:999px;padding:3px 8px;background:var(--green-bg);color:var(--green)}
+      .badge.superseded .btag{background:var(--bad-bg);color:var(--ink-soft)}
+      .badge.locked .btag{background:var(--bad-bg);color:var(--ink-faint)}
+      .modal-note{text-align:center;color:var(--ink-faint);font-size:12px;margin:18px 0 0}
+      .modal-actions{display:flex;justify-content:center;margin-top:12px}
+
+      /* Badge unlock toast */
+      .toast-wrap{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+      .toast{background:var(--ink);color:var(--bg);border-radius:6px;padding:10px 16px 10px 11px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 8px 22px rgba(0,0,0,.3);animation:toastIn .28s ease-out;max-width:92vw}
+      .toast.out{opacity:0;transition:opacity .3s}
+      .toast .tmedal{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;flex:0 0 auto;overflow:hidden}
+      @keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+      @media (prefers-reduced-motion:reduce){.toast{animation:none}}
+
+      footer{text-align:center;margin-top:26px;color:var(--ink-faint);font-size:12.5px}
+      .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:40}
+      .confetti span{position:absolute;top:-14px;border-radius:2px;animation:fall linear forwards}
+      @keyframes fall{to{transform:translateY(108vh) rotate(680deg);opacity:.9}}
+      @media (max-width:560px){.stats{grid-template-columns:repeat(4,1fr)}.stat .v{font-size:18px}.board-top{font-size:10px;letter-spacing:.08em}.mode-flags{margin-left:0}}
+      @media (prefers-reduced-motion:reduce){.cell.hint-cell{animation:none;box-shadow:0 0 0 3px var(--green)}.confetti{display:none}}
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="app">
+      <header>
+        <button class="icon-btn" id="statsBtn" type="button" aria-label="Statistics and badges" title="Statistics and badges">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3.5" y="11" width="4.4" height="8" rx="1"/><rect x="9.8" y="6.5" width="4.4" height="12.5" rx="1"/><rect x="16.1" y="3" width="4.4" height="16" rx="1"/><rect x="2.5" y="20" width="19" height="1.8" rx=".9"/></svg>
+        </button>
+        <h1>Benjamin&rsquo;s Minesweeper</h1>
+        <p class="tagline">Clear the board without hitting a mine. Numbers tell you how many mines touch that square — <strong>flag the mines, clear the rest</strong>.</p>
+      </header>
+
+      <div class="controls" role="group" aria-label="Difficulty">
+        <div class="seg" id="diffSeg">
+          <button type="button" data-diff="beginner" aria-pressed="true">Beginner · 9×9</button>
+          <button type="button" data-diff="intermediate" aria-pressed="false">Medium · 16×16</button>
+          <button type="button" data-diff="expert" aria-pressed="false">Expert · 30×16</button>
+        </div>
+        <button class="btn primary" id="newGameBtn" type="button">↻ New game</button>
+      </div>
+
+      <div class="mode-banner" id="modeBanner" data-mode="dig" role="status" aria-live="polite">
+        <span class="mode-dot" aria-hidden="true"></span>
+        <span class="mode-text" id="modeText">Dig mode — tap to reveal</span>
+        <span class="mode-flags" id="modeFlags">⚑ 10 flags left</span>
+        <button class="mode-toggle" id="modeToggleBtn" type="button" aria-pressed="false">Switch to Flag</button>
+      </div>
+
+      <div class="stats" aria-label="Game statistics">
+        <div class="stat"><div class="v" id="statMines">10</div><div class="k">Mines left</div></div>
+        <div class="stat"><div class="v" id="statFlags">0</div><div class="k">Flags placed</div></div>
+        <div class="stat"><div class="v" id="statTime">0:00</div><div class="k">Time</div></div>
+        <div class="stat"><div class="v" id="statBest">—</div><div class="k">Best · Beginner</div></div>
+      </div>
+
+      <div class="board-frame">
+        <div class="board-top">
+          <span class="lamp" id="lamp"><i></i><span id="lampText">Ready</span></span>
+          <button class="face-btn" id="faceBtn" type="button" aria-label="New game">🙂</button>
+          <span id="boardLabel">9 × 9 · 10 mines</span>
+        </div>
+        <div class="board-scroll" id="boardScroll">
+          <div class="board" id="board" role="grid" aria-label="Minesweeper board"></div>
+        </div>
+        <div class="zoombar" aria-label="Board zoom">
+          <span class="zlabel">Zoom</span>
+          <button class="zoom-btn" id="zoomOutBtn" type="button" aria-label="Zoom out">−</button>
+          <span class="zoom-val" id="zoomVal">100%</span>
+          <button class="zoom-btn" id="zoomInBtn" type="button" aria-label="Zoom in">+</button>
+          <button class="zoom-btn reset" id="zoomResetBtn" type="button">Reset</button>
+        </div>
+      </div>
+
+      <p class="note" id="note">Tap a square to reveal it. Your first tap is always safe.</p>
+
+      <div class="under">
+        <button class="btn" id="hintBtn" type="button">Hint</button>
+        <button class="btn" id="soundBtn" type="button" aria-pressed="true"><span id="soundLabel">Sound on</span></button>
+      </div>
+
+      <section class="banner" id="banner" aria-live="polite">
+        <h2 id="bannerTitle"></h2>
+        <p id="bannerText"></p>
+        <p class="accuracy" id="bannerAccuracy"></p>
+        <button class="btn primary" id="againBtn" type="button">↻ Play again</button>
+      </section>
+
+      <section class="howto">
+        <h2>How to play</h2>
+        <ol>
+          <li><strong>Tap / click</strong> a covered square to reveal it. A number means that many mines touch it (including diagonally).</li>
+          <li><strong>Flag a mine:</strong> right-click, long-press, press <strong>F</strong> while a square is focused, or switch to Flag mode in the banner above the board. Flag mode stays on until you switch back, and the banner always shows how many flags you have left.</li>
+          <li><strong>Chord:</strong> click a revealed number when the right number of flags surround it to clear the rest at once.</li>
+          <li><strong>Big boards:</strong> on Expert, use the Zoom controls under the board to enlarge the squares — the stats strip stays pinned at the top on phones so mines left is always in view.</li>
+          <li><strong>Win</strong> by revealing every safe square. You don&rsquo;t have to flag every mine to win. When a game ends, the board shows every mine location and your flag accuracy.</li>
+          <li><strong>Statistics &amp; badges:</strong> tap the bar-chart icon in the header any time to see games played, win %, win streaks, a win-times chart, and your badges for each difficulty. Statistics open on their own when a game ends, and a toast pops up when you unlock a new badge. Everything is saved on this device only.</li>
+        </ol>
+        <p class="tip"><strong>Start in a corner:</strong> corners touch only 3 squares, so the numbers there are easiest to read. If a 1 has only one covered neighbour, that neighbour is a mine — flag it and move on.</p>
+      </section>
+
+      <footer>Benjamin&rsquo;s Minesweeper — part of Benjamin&rsquo;s Games. Statistics, badges, and best times are saved on this device only.</footer>
+    </div>
+    <div class="modal-backdrop" id="statsModal">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+        <button class="modal-close" id="statsCloseBtn" type="button" aria-label="Close statistics">&#10005;</button>
+        <h2 id="statsTitle">Statistics</h2>
+        <div class="modal-seg-wrap">
+          <div class="seg" id="statsDiffSeg" role="group" aria-label="Statistics difficulty">
+            <button type="button" data-sdiff="beginner" aria-pressed="true">Beginner</button>
+            <button type="button" data-sdiff="intermediate" aria-pressed="false">Medium</button>
+            <button type="button" data-sdiff="expert" aria-pressed="false">Expert</button>
+          </div>
+        </div>
+        <div class="mstats" aria-label="Statistics for the selected difficulty">
+          <div class="mstat"><div class="v" id="msPlayed">0</div><div class="k">Played</div></div>
+          <div class="mstat"><div class="v" id="msWinPct">0</div><div class="k">Win %</div></div>
+          <div class="mstat"><div class="v" id="msCurStreak">0</div><div class="k">Current Streak</div></div>
+          <div class="mstat"><div class="v" id="msMaxStreak">0</div><div class="k">Max Streak</div></div>
+        </div>
+        <h3>Win Times</h3>
+        <p class="modal-sub">Wins by finishing time on <span id="msDistDiff">Beginner</span>. Streaks count consecutive wins in this endless game, not calendar days.</p>
+        <div id="distRows"></div>
+        <h3>Badges <span class="sub-count" id="badgeCount"></span></h3>
+        <div class="badge-grid" id="badgeGrid"></div>
+        <p class="modal-note">Statistics and badges are saved on this device only.</p>
+        <div class="modal-actions">
+          <button class="btn primary" id="modalNewBtn" type="button">&#8635; New game</button>
+        </div>
+      </div>
+    </div>
+    <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+    <script>
+      (function(){
+        "use strict";
+        var CONFIGS={
+          beginner:{cols:9,rows:9,mines:10,label:"Beginner"},
+          intermediate:{cols:16,rows:16,mines:40,label:"Medium"},
+          expert:{cols:30,rows:16,mines:99,label:"Expert"}
+        };
+        var ZOOMS=[1,1.25,1.5,1.75,2];
+        var diff="beginner";
+        var cols=9,rows=9,totalMines=10,total=81;
+        var cells=[]; // {mine, revealed, flagged, count}
+        var minesPlaced=false, gameOver=false, won=false, revealedCount=0, flagCount=0;
+        var flagMode=false, soundOn=true, hintIdx=-1;
+        var zoomIdx=0;
+        var startedAt=null, elapsedBase=0, timerId=null;
+        var bestTimes={}; // in-memory only
+        var explodedIdx=-1;
+
+        var app=document.getElementById("app");
+        var boardEl=document.getElementById("board");
+        var statMines=document.getElementById("statMines");
+        var statFlags=document.getElementById("statFlags");
+        var statTime=document.getElementById("statTime");
+        var statBest=document.getElementById("statBest");
+        var lamp=document.getElementById("lamp");
+        var lampText=document.getElementById("lampText");
+        var boardLabel=document.getElementById("boardLabel");
+        var note=document.getElementById("note");
+        var banner=document.getElementById("banner");
+        var bannerTitle=document.getElementById("bannerTitle");
+        var bannerText=document.getElementById("bannerText");
+        var bannerAccuracy=document.getElementById("bannerAccuracy");
+        var againBtn=document.getElementById("againBtn");
+        var faceBtn=document.getElementById("faceBtn");
+        var modeBanner=document.getElementById("modeBanner");
+        var modeText=document.getElementById("modeText");
+        var modeFlags=document.getElementById("modeFlags");
+        var modeToggleBtn=document.getElementById("modeToggleBtn");
+        var zoomVal=document.getElementById("zoomVal");
+        var zoomOutBtn=document.getElementById("zoomOutBtn");
+        var zoomInBtn=document.getElementById("zoomInBtn");
+
+        function idx(r,c){return r*cols+c;}
+        function rc(i){return [Math.floor(i/cols), i%cols];}
+        function neighbors(i){
+          var p=rc(i), r=p[0], c=p[1], out=[];
+          for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
+            if(dr===0&&dc===0) continue;
+            var nr=r+dr, nc=c+dc;
+            if(nr>=0&&nr<rows&&nc>=0&&nc<cols) out.push(idx(nr,nc));
+          }
+          return out;
+        }
+        function fmtTime(ms){var s=Math.floor(ms/1000),m=Math.floor(s/60),h=Math.floor(m/60),ss=("0"+(s%60)).slice(-2); if(h>0) return h+":"+("0"+(m%60)).slice(-2)+":"+ss; return m+":"+ss;}
+        function elapsedMs(){ if(startedAt===null) return elapsedBase; return elapsedBase+(Date.now()-startedAt); }
+        function startTimer(){ if(timerId!==null) return; timerId=setInterval(function(){statTime.textContent=fmtTime(elapsedMs());},250); }
+        function stopTimer(){ if(timerId!==null){clearInterval(timerId); timerId=null;} }
+        function ensureTimer(){ if(startedAt===null && !gameOver){ startedAt=Date.now(); startTimer(); } }
+        function flagStats(){
+          var placed=0, correct=0;
+          cells.forEach(function(c){ if(c.flagged){ placed++; if(c.mine) correct++; } });
+          return {placed:placed, correct:correct};
+        }
+        function accuracyLine(){
+          var fs=flagStats();
+          if(fs.placed===0) return "Flag accuracy: <strong>no flags placed</strong> — all "+totalMines+" mine locations are shown on the board.";
+          var pct=Math.round(fs.correct/fs.placed*100);
+          return "Flag accuracy: <strong>"+fs.correct+" of "+fs.placed+" flags</strong> were on mines ("+pct+"%) · "+fs.correct+" of "+totalMines+" mines flagged";
+        }
+
+        /* ---- Statistics & badges, saved on this device (NYT Wordle style) ---- */
+        var STORE_KEY="benjamins-minesweeper-v1";
+        var DIST_LABELS=["Under 30s","30\u201359s","60\u2013119s","120\u2013239s","240s +"];
+        var ICON_STAR='<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.5l-5.9 3.1 1.2-6.5L2.5 9.5l6.6-.9z"/></svg>';
+        var ICON_CHECK='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg>';
+        var ICON_GEM='<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.8l6.8 7.4L12 21.2 5.2 10.2z"/></svg>';
+        var ICON_FLAME='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+        var BADGES=[
+          {id:"first-win",name:"First Win",icon:ICON_STAR,cls:"",desc:"Win a game on any difficulty."},
+          {id:"clean-sweep",name:"Clean Sweep",icon:ICON_CHECK,cls:"clean",desc:"Win a game with no flags on safe squares."},
+          {id:"expert-win",name:"Expert Win",icon:ICON_GEM,cls:"expert",desc:"Win a game on Expert (30 \u00d7 16, 99 mines)."},
+          {id:"streak-3",name:"3-Win Streak",icon:ICON_FLAME,cls:"",streak:3,desc:"Win 3 games in a row on one difficulty."},
+          {id:"streak-7",name:"7-Win Streak",icon:ICON_FLAME,cls:"",streak:7,desc:"Win 7 games in a row on one difficulty."},
+          {id:"streak-14",name:"14-Win Streak",icon:ICON_FLAME,cls:"",streak:14,desc:"Win 14 games in a row on one difficulty."},
+          {id:"streak-30",name:"30-Win Streak",icon:ICON_FLAME,cls:"",streak:30,desc:"Win 30 games in a row on one difficulty."},
+          {id:"games-10",name:"10 Games",icon:"10",cls:"",desc:"Finish 10 games across all difficulties."},
+          {id:"games-50",name:"50 Games",icon:"50",cls:"",desc:"Finish 50 games across all difficulties."},
+          {id:"games-100",name:"100 Games",icon:"100",cls:"",desc:"Finish 100 games across all difficulties."}
+        ];
+        function blankDiffStats(){ return {played:0,wins:0,curStreak:0,maxStreak:0,dist:[0,0,0,0,0]}; }
+        var store={stats:{beginner:blankDiffStats(),intermediate:blankDiffStats(),expert:blankDiffStats()},badges:{},best:{}};
+        var statsRecorded=false, gameSeq=0, statsView="beginner", lastWinBucket=-1, lastWinDiff="";
+        var statsModal=document.getElementById("statsModal");
+        var statsDiffSeg=document.getElementById("statsDiffSeg");
+        var badgeGrid=document.getElementById("badgeGrid");
+        var toastWrap=document.getElementById("toastWrap");
+        function loadStore(){
+          try{
+            var raw=window.localStorage.getItem(STORE_KEY);
+            if(!raw) return;
+            var p=JSON.parse(raw);
+            if(p&&p.stats){
+              for(var k in store.stats){
+                var s=p.stats[k];
+                if(!s) continue;
+                var b=blankDiffStats();
+                b.played=s.played|0; b.wins=s.wins|0; b.curStreak=s.curStreak|0; b.maxStreak=s.maxStreak|0;
+                if(s.dist&&s.dist.length===5) b.dist=s.dist.map(function(x){return x|0;});
+                store.stats[k]=b;
+              }
+            }
+            if(p&&p.badges) store.badges=p.badges;
+            if(p&&p.best) store.best=p.best;
+          }catch(e){}
+        }
+        function saveStore(){ try{ window.localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){} }
+        function totalPlayed(){ var t=0; for(var k in store.stats) t+=store.stats[k].played; return t; }
+        function bestMaxStreak(){ var m=0; for(var k in store.stats) m=Math.max(m, store.stats[k].maxStreak); return m; }
+        function badgeById(id){ for(var i=0;i<BADGES.length;i++) if(BADGES[i].id===id) return BADGES[i]; return null; }
+        function evaluateBadges(wonGame, wrongFlags, gameDiff){
+          var newly=[];
+          function earn(id){ if(!store.badges[id]){ store.badges[id]=true; newly.push(id); } }
+          if(wonGame){
+            earn("first-win");
+            if(wrongFlags===0) earn("clean-sweep");
+            if(gameDiff==="expert") earn("expert-win");
+          }
+          var ms=bestMaxStreak();
+          [3,7,14,30].forEach(function(n){ if(ms>=n) earn("streak-"+n); });
+          var tp=totalPlayed();
+          [10,50,100].forEach(function(n){ if(tp>=n) earn("games-"+n); });
+          return newly;
+        }
+        function recordGameEnd(wonGame){
+          if(statsRecorded) return; statsRecorded=true;
+          var s=store.stats[diff];
+          s.played++;
+          var wrong=0;
+          cells.forEach(function(c){ if(c.flagged&&!c.mine) wrong++; });
+          if(wonGame){
+            s.wins++; s.curStreak++;
+            if(s.curStreak>s.maxStreak) s.maxStreak=s.curStreak;
+            var sec=Math.floor(elapsedBase/1000);
+            var b= sec<30?0 : sec<60?1 : sec<120?2 : sec<240?3 : 4;
+            s.dist[b]++; lastWinBucket=b; lastWinDiff=diff;
+          } else {
+            s.curStreak=0; lastWinBucket=-1; lastWinDiff="";
+          }
+          if(bestTimes[diff]!==undefined) store.best[diff]=bestTimes[diff];
+          var newly=evaluateBadges(wonGame, wrong, diff);
+          saveStore();
+          newly.forEach(function(id){ queueToast(id); });
+          var seq=gameSeq;
+          setTimeout(function(){ if(seq===gameSeq && gameOver) openStats(); },1200);
+        }
+        function highestStreakBadgeId(){
+          var best=null;
+          BADGES.forEach(function(b){ if(b.streak && store.badges[b.id]) best=b.id; });
+          return best;
+        }
+        function renderStats(){
+          Array.prototype.forEach.call(statsDiffSeg.children, function(btn){ btn.setAttribute("aria-pressed", btn.getAttribute("data-sdiff")===statsView?"true":"false"); });
+          var s=store.stats[statsView];
+          document.getElementById("msPlayed").textContent=s.played;
+          document.getElementById("msWinPct").textContent= s.played? Math.round(s.wins/s.played*100) : 0;
+          document.getElementById("msCurStreak").textContent=s.curStreak;
+          document.getElementById("msMaxStreak").textContent=s.maxStreak;
+          document.getElementById("msDistDiff").textContent=CONFIGS[statsView].label;
+          var maxC=1; s.dist.forEach(function(n){ if(n>maxC) maxC=n; });
+          var html="";
+          DIST_LABELS.forEach(function(label,i){
+            var n=s.dist[i];
+            var w= n>0? Math.max(9, Math.round(n/maxC*100)) : 7;
+            var cur= (statsView===lastWinDiff && i===lastWinBucket)? " current":"";
+            html+='<div class="dist-row"><span class="dl">'+label+'</span><div class="bar'+cur+'" style="width:'+w+'%">'+n+'</div></div>';
+          });
+          document.getElementById("distRows").innerHTML=html;
+          var hiId=highestStreakBadgeId();
+          var earnedCount=0; BADGES.forEach(function(b){ if(store.badges[b.id]) earnedCount++; });
+          document.getElementById("badgeCount").textContent="\u00b7 "+earnedCount+" of "+BADGES.length+" unlocked";
+          var bh="";
+          BADGES.forEach(function(b){
+            var earned=!!store.badges[b.id];
+            var cls="badge"+(b.cls?" "+b.cls:""), tag="";
+            if(b.streak){
+              if(earned && b.id===hiId){ cls+=" earned"; tag='<span class="btag">Highest streak</span>'; }
+              else if(earned){ cls+=" superseded"; tag='<span class="btag">Unlocked</span>'; }
+              else { cls+=" locked"; tag='<span class="btag">Locked</span>'; }
+            } else if(earned){ cls+=" earned"; tag='<span class="btag">Unlocked</span>'; }
+            else { cls+=" locked"; tag='<span class="btag">Locked</span>'; }
+            bh+='<div class="'+cls+'"><div class="medal" aria-hidden="true">'+b.icon+'</div><div class="bname">'+b.name+'</div><div class="bdesc">'+b.desc+'</div>'+tag+'</div>';
+          });
+          badgeGrid.innerHTML=bh;
+        }
+        function openStats(){
+          statsView=diff;
+          renderStats();
+          statsModal.classList.add("show");
+        }
+        function closeStats(){ statsModal.classList.remove("show"); }
+        var toastQueue=[], toastBusy=false;
+        function queueToast(id){ toastQueue.push(id); pumpToasts(); }
+        function pumpToasts(){
+          if(toastBusy) return;
+          var b=null;
+          while(toastQueue.length && !b) b=badgeById(toastQueue.shift());
+          if(!b) return;
+          toastBusy=true;
+          var el=document.createElement("div");
+          el.className="toast";
+          el.innerHTML='<span class="tmedal" aria-hidden="true">'+b.icon+'</span><span>Badge unlocked: <strong>'+b.name+'</strong></span>';
+          toastWrap.appendChild(el);
+          setTimeout(function(){
+            el.classList.add("out");
+            setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); toastBusy=false; pumpToasts(); },320);
+          },3600);
+        }
+
+        var audioCtx=null;
+        function tone(freq,dur,type,vol){
+          if(!soundOn) return;
+          try{
+            if(!audioCtx){ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; audioCtx=new AC(); }
+            if(audioCtx.state==="suspended") audioCtx.resume();
+            var t=audioCtx.currentTime, o=audioCtx.createOscillator(), g=audioCtx.createGain();
+            o.type=type||"triangle"; o.frequency.setValueAtTime(freq,t);
+            g.gain.setValueAtTime(vol||0.11,t); g.gain.exponentialRampToValueAtTime(0.001,t+(dur||0.09));
+            o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t+(dur||0.1));
+          }catch(e){}
+        }
+        function blip(f){tone(f,0.09,"triangle",0.11);}
+        function boom(){ tone(90,0.35,"sawtooth",0.16); setTimeout(function(){tone(55,0.4,"square",0.12);},60); }
+        function winChime(){ [523.25,659.25,783.99,1046.5].forEach(function(f,i){ setTimeout(function(){blip(f);},i*110); }); }
+
+        function baseCellPx(){ return diff==="beginner"?38 : diff==="intermediate"?32 : 26; }
+        function applyZoom(){
+          var px=Math.round(baseCellPx()*ZOOMS[zoomIdx]);
+          boardEl.style.gridTemplateColumns="repeat("+cols+", "+px+"px)";
+          boardEl.style.gridTemplateRows="repeat("+rows+", "+px+"px)";
+          zoomVal.textContent=Math.round(ZOOMS[zoomIdx]*100)+"%";
+          zoomOutBtn.disabled = zoomIdx===0;
+          zoomInBtn.disabled = zoomIdx===ZOOMS.length-1;
+        }
+
+        function newGame(){
+          var cfg=CONFIGS[diff]; cols=cfg.cols; rows=cfg.rows; totalMines=cfg.mines; total=cols*rows;
+          cells=[]; for(var i=0;i<total;i++) cells.push({mine:false,revealed:false,flagged:false,count:0});
+          minesPlaced=false; gameOver=false; won=false; revealedCount=0; flagCount=0; hintIdx=-1; explodedIdx=-1; statsRecorded=false; gameSeq++;
+          startedAt=null; elapsedBase=0; stopTimer();
+          banner.className="banner"; banner.classList.remove("show");
+          bannerAccuracy.innerHTML="";
+          faceBtn.textContent="🙂";
+          app.classList.toggle("is-expert", diff==="expert");
+          againBtn.textContent="↻ Play again · "+cfg.label;
+          buildBoard(); render();
+          note.textContent="Tap a square to reveal it. Your first tap is always safe.";
+        }
+        function placeMines(firstIdx){
+          var safe={}; safe[firstIdx]=true;
+          neighbors(firstIdx).forEach(function(n){ safe[n]=true; });
+          var placed=0, guard=0;
+          while(placed<totalMines && guard<total*50){
+            guard++;
+            var i=Math.floor(Math.random()*total);
+            if(safe[i]||cells[i].mine) continue;
+            cells[i].mine=true; placed++;
+          }
+          for(var j=0;j<total;j++){
+            if(cells[j].mine){ cells[j].count=0; continue; }
+            var cnt=0; neighbors(j).forEach(function(n){ if(cells[n].mine) cnt++; }); cells[j].count=cnt;
+          }
+          minesPlaced=true;
+        }
+        function buildBoard(){
+          boardEl.innerHTML="";
+          boardEl.classList.toggle("dense", cols>=16);
+          applyZoom();
+          for(var i=0;i<total;i++){
+            (function(index){
+              var b=document.createElement("button");
+              b.type="button"; b.className="cell"; b.setAttribute("role","gridcell"); b.dataset.index=index;
+              var pressTimer=null, longPressed=false;
+              b.addEventListener("click", function(){
+                if(longPressed){ longPressed=false; return; }
+                onCellActivate(index);
+              });
+              b.addEventListener("contextmenu", function(e){ e.preventDefault(); toggleFlag(index); });
+              b.addEventListener("pointerdown", function(){
+                longPressed=false;
+                pressTimer=setTimeout(function(){ longPressed=true; toggleFlag(index); },480);
+              });
+              ["pointerup","pointerleave","pointercancel"].forEach(function(ev){ b.addEventListener(ev, function(){ if(pressTimer) clearTimeout(pressTimer); }); });
+              b.addEventListener("keydown", function(e){
+                if(e.key==="f"||e.key==="F"){ e.preventDefault(); toggleFlag(index); }
+              });
+              boardEl.appendChild(b);
+            })(i);
+          }
+        }
+        function onCellActivate(i){
+          if(gameOver) return;
+          if(flagMode){ toggleFlag(i); return; }
+          var cell=cells[i];
+          if(cell.flagged) return;
+          if(cell.revealed){ chord(i); return; }
+          reveal(i);
+        }
+        function toggleFlag(i){
+          if(gameOver) return;
+          var cell=cells[i];
+          if(cell.revealed) return;
+          ensureTimer();
+          cell.flagged=!cell.flagged;
+          flagCount+= cell.flagged?1:-1;
+          hintIdx=-1;
+          blip(cell.flagged?720:380);
+          render();
+        }
+        function reveal(start){
+          if(!minesPlaced) placeMines(start);
+          ensureTimer();
+          var cell=cells[start];
+          if(cell.mine){
+            explodedIdx=start; gameOver=true; won=false;
+            elapsedBase=elapsedMs(); startedAt=null; stopTimer();
+            // reveal all mines so every mine location is visible
+            cells.forEach(function(c){ if(c.mine) c.revealed=true; });
+            boom(); faceBtn.textContent="😵";
+            bannerTitle.textContent="Boom — mine hit.";
+            bannerText.innerHTML="That square was a mine on <strong>"+CONFIGS[diff].label+"</strong> after <strong>"+fmtTime(elapsedBase)+"</strong>. Every mine location is now shown on the board — flags on real mines stayed yellow, and a ✕ marks a flag with no mine under it.";
+            bannerAccuracy.innerHTML=accuracyLine();
+            banner.className="banner show lose";
+            note.textContent="Game over. Tap Play again to retry "+CONFIGS[diff].label+", or hit New game.";
+            recordGameEnd(false);
+            render(); return;
+          }
+          // flood fill
+          var stack=[start];
+          while(stack.length){
+            var cur=stack.pop(), cc=cells[cur];
+            if(cc.revealed||cc.flagged) continue;
+            cc.revealed=true; revealedCount++;
+            if(cc.count===0){ neighbors(cur).forEach(function(n){ if(!cells[n].revealed) stack.push(n); }); }
+          }
+          blip(560);
+          hintIdx=-1;
+          checkWin();
+          render();
+        }
+        function chord(i){
+          var cell=cells[i];
+          if(!cell.revealed||cell.count===0) return;
+          var ns=neighbors(i);
+          var flags=ns.filter(function(n){return cells[n].flagged;}).length;
+          if(flags!==cell.count) return;
+          var targets=ns.filter(function(n){return !cells[n].flagged && !cells[n].revealed;});
+          for(var k=0;k<targets.length;k++){
+            if(gameOver) break;
+            reveal(targets[k]);
+          }
+        }
+        function checkWin(){
+          if(revealedCount=== total-totalMines){
+            gameOver=true; won=true;
+            elapsedBase=elapsedMs(); startedAt=null; stopTimer();
+            var acc=accuracyLine(); // capture before remaining mines are auto-flagged
+            recordGameEnd(true);
+            cells.forEach(function(c){ if(c.mine && !c.flagged){ c.flagged=true; } });
+            flagCount=totalMines;
+            var prev=bestTimes[diff];
+            if(prev===undefined||elapsedBase<prev) bestTimes[diff]=elapsedBase;
+            faceBtn.textContent="😎";
+            bannerTitle.textContent="Board cleared!";
+            bannerText.innerHTML="You cleared <strong>"+CONFIGS[diff].label+" ("+cols+" × "+rows+")</strong> in <strong>"+fmtTime(elapsedBase)+"</strong> with all "+totalMines+" mines avoided. Every mine is now flagged on the board."+(bestTimes[diff]!==undefined?" Best on "+CONFIGS[diff].label+" this visit: <strong>"+fmtTime(bestTimes[diff])+"</strong>.":"");
+            bannerAccuracy.innerHTML=acc;
+            banner.className="banner show win";
+            note.textContent="Cleared! Every safe square is revealed.";
+            winChime(); confetti();
+          }
+        }
+        function showHint(){
+          if(gameOver) return;
+          if(!minesPlaced){ note.textContent="Make your first tap first — then Hint can point to a safe square."; return; }
+          var safePick=-1;
+          for(var i=0;i<total;i++){
+            if(!cells[i].revealed||cells[i].count===0) continue;
+            var ns=neighbors(i);
+            var flags=ns.filter(function(n){return cells[n].flagged;}).length;
+            if(flags===cells[i].count){
+              var cand=ns.filter(function(n){return !cells[n].flagged && !cells[n].revealed && !cells[n].mine;});
+              if(cand.length){ safePick=cand[0]; break; }
+            }
+          }
+          if(safePick===-1){
+            var opts=[]; for(var j=0;j<total;j++) if(!cells[j].mine && !cells[j].revealed && !cells[j].flagged) opts.push(j);
+            if(!opts.length) return;
+            safePick=opts[Math.floor(Math.random()*opts.length)];
+          }
+          hintIdx=safePick; blip(760); render();
+          var el=boardEl.children[safePick]; if(el) el.focus({preventScroll:true});
+          note.textContent="Hint: the pulsing square is safe to reveal.";
+        }
+        function setFlagMode(v){
+          flagMode=v;
+          blip(flagMode?700:420);
+          render();
+          note.textContent= flagMode?"Flag mode on — it stays on until you switch back. Tap a square to flag it.":"Dig mode — tap a square to reveal it.";
+        }
+        function render(){
+          var cfg=CONFIGS[diff];
+          for(var i=0;i<total;i++){
+            var el=boardEl.children[i]; if(!el) continue;
+            var c=cells[i];
+            el.className="cell";
+            el.innerHTML="";
+            el.removeAttribute("data-n");
+            var r=Math.floor(i/cols)+1, col=(i%cols)+1, label="Row "+r+", column "+col;
+            if(c.revealed && c.mine){
+              el.classList.add("revealed","mine"); if(i===explodedIdx) el.classList.add("exploded");
+              el.innerHTML='<span class="mine-icon" aria-hidden="true">💣</span>'; label+=", mine";
+            } else if(c.revealed){
+              el.classList.add("revealed");
+              if(c.count>0){ el.setAttribute("data-n",c.count); el.innerHTML='<span class="num">'+c.count+'</span>'; label+=", "+c.count; }
+              else label+=", empty";
+            } else if(c.flagged){
+              if(gameOver && !c.mine){ el.classList.add("wrong-flag"); el.innerHTML='<span class="flag-icon" aria-hidden="true">✕</span>'; label+=", flagged, no mine here"; }
+              else { el.classList.add("flagged"); el.innerHTML='<span class="flag-icon" aria-hidden="true">⚑</span>'; label+=", flagged"; }
+            } else {
+              label+=", covered";
+            }
+            if(i===hintIdx && !c.revealed) el.classList.add("hint-cell");
+            el.setAttribute("aria-label",label);
+          }
+          var left=totalMines-flagCount;
+          statMines.textContent=left;
+          statFlags.textContent=flagCount;
+          statTime.textContent=fmtTime(elapsedMs());
+          statBest.textContent= bestTimes[diff]!==undefined? fmtTime(bestTimes[diff]) : "—";
+          var bestStat = statBest.parentElement.querySelector(".k");
+          if(bestStat) bestStat.textContent="Best · "+cfg.label;
+          boardLabel.textContent=cols+" × "+rows+" · "+totalMines+" mines";
+          if(gameOver){
+            lampText.textContent= won?"Cleared!":"Boom";
+            lamp.className="lamp "+(won?"done":"dead");
+          } else if(!minesPlaced && revealedCount===0 && flagCount===0){
+            lampText.textContent="Ready"; lamp.className="lamp";
+          } else {
+            lampText.textContent="Playing"; lamp.className="lamp";
+          }
+          // sticky mode banner
+          modeBanner.setAttribute("data-mode", flagMode?"flag":"dig");
+          modeText.textContent= flagMode?"Flag mode — tap to place a flag":"Dig mode — tap to reveal";
+          modeFlags.textContent="⚑ "+left+" flag"+(left===1?"":"s")+" left";
+          modeToggleBtn.textContent= flagMode?"Switch to Dig":"Switch to Flag";
+          modeToggleBtn.setAttribute("aria-pressed", flagMode?"true":"false");
+        }
+        function confetti(){
+          if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          var box=document.getElementById("confetti"); box.innerHTML="";
+          var colors=["#538d4e","#6aaa64","#c9b458","#787c7e","#d3d6da"];
+          for(var i=0;i<42;i++){
+            var s=document.createElement("span"); var sz=6+Math.random()*7;
+            s.style.left=(Math.random()*100)+"vw"; s.style.width=sz+"px"; s.style.height=(sz*(0.5+Math.random()*0.9))+"px";
+            s.style.background=colors[i%colors.length]; s.style.animationDuration=(1.6+Math.random()*1.6)+"s"; s.style.animationDelay=(Math.random()*0.5)+"s";
+            box.appendChild(s);
+          }
+          setTimeout(function(){box.innerHTML="";},4200);
+        }
+
+        document.getElementById("newGameBtn").addEventListener("click",function(){blip(520); newGame();});
+        againBtn.addEventListener("click",function(){blip(520); newGame();});
+        faceBtn.addEventListener("click",function(){blip(520); newGame();});
+        document.getElementById("hintBtn").addEventListener("click",showHint);
+        modeToggleBtn.addEventListener("click",function(){ setFlagMode(!flagMode); });
+        zoomInBtn.addEventListener("click",function(){ if(zoomIdx<ZOOMS.length-1){ zoomIdx++; applyZoom(); } });
+        zoomOutBtn.addEventListener("click",function(){ if(zoomIdx>0){ zoomIdx--; applyZoom(); } });
+        document.getElementById("zoomResetBtn").addEventListener("click",function(){ zoomIdx=0; applyZoom(); });
+        var soundBtn=document.getElementById("soundBtn");
+        soundBtn.addEventListener("click",function(){ soundOn=!soundOn; soundBtn.setAttribute("aria-pressed",soundOn?"true":"false"); document.getElementById("soundLabel").textContent=soundOn?"Sound on":"Sound off"; if(soundOn) blip(660); });
+        document.getElementById("statsBtn").addEventListener("click",function(){ blip(600); openStats(); });
+        document.getElementById("statsCloseBtn").addEventListener("click",function(){ closeStats(); });
+        document.getElementById("modalNewBtn").addEventListener("click",function(){ closeStats(); blip(520); newGame(); });
+        statsModal.addEventListener("click",function(e){ if(e.target===statsModal) closeStats(); });
+        document.addEventListener("keydown",function(e){ if(e.key==="Escape" && statsModal.classList.contains("show")) closeStats(); });
+        statsDiffSeg.addEventListener("click",function(e){
+          var btn=e.target.closest("button[data-sdiff]"); if(!btn) return;
+          statsView=btn.getAttribute("data-sdiff"); renderStats();
+        });
+        var seg=document.getElementById("diffSeg");
+        seg.addEventListener("click",function(e){
+          var btn=e.target.closest("button[data-diff]"); if(!btn) return;
+          var d=btn.getAttribute("data-diff"); if(d===diff) return;
+          diff=d;
+          Array.prototype.forEach.call(seg.children,function(b){ b.setAttribute("aria-pressed", b===btn?"true":"false"); });
+          newGame();
+        });
+
+        loadStore();
+        bestTimes=store.best||{};
+        newGame();
+      })();
+    </script>
+  </body>
+</html>

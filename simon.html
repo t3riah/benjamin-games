@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Benjamin's Simon</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --panel: #ffffff;
+        --ink: #1a1a1b;
+        --ink-soft: #565f6e;
+        --border: #d3d6da;
+        --border-strong: #878a8c;
+        --green: #538d4e;
+        --green-dark: #3f6d3b;
+        --yellow: #c9b458;
+        --gray: #787c7e;
+        --gray-light: #d3d6da;
+        --absent: #787c7e;
+        --key-bg: #d3d6da;
+        --chip: #f2f2f2;
+        --good-bg: #eaf3e8;
+        --bad: #b3402a;
+        --bad-bg: #f9e7e1;
+        --pad-green: #538d4e;
+        --pad-yellow: #c9b458;
+        --pad-red: #c0543f;
+        --pad-blue: #4a6fa5;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #121213;
+          --panel: #121213;
+          --ink: #ffffff;
+          --ink-soft: #a8adb3;
+          --border: #3a3a3c;
+          --border-strong: #565f6e;
+          --green: #538d4e;
+          --yellow: #c9b458;
+          --gray: #787c7e;
+          --gray-light: #3a3a3c;
+          --key-bg: #818384;
+          --chip: #1f1f20;
+          --good-bg: #1e2b1c;
+          --bad: #ff9a85;
+          --bad-bg: #3a1d16;
+          --pad-green: #538d4e;
+          --pad-yellow: #b59f3b;
+          --pad-red: #b84a38;
+          --pad-blue: #4a6fa5;
+          color-scheme: dark;
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        min-height: 100vh;
+      }
+      .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 48px; }
+
+      /* Header — NYT Wordle style: thin bottom border, centered bold title */
+      header {
+        border-bottom: 1px solid var(--border);
+        padding: 14px 4px 12px;
+        text-align: center;
+        margin-bottom: 16px;
+        position: relative;
+      }
+      .header-actions { position: absolute; right: 2px; top: 14px; display: flex; gap: 4px; }
+      .icon-btn {
+        appearance: none; background: transparent; border: 0; cursor: pointer; padding: 7px;
+        color: var(--ink); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+      }
+      .icon-btn:hover { background: var(--chip); }
+      .icon-btn:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+      .icon-btn svg { width: 24px; height: 24px; display: block; }
+      .eyebrow {
+        font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+        color: var(--gray); margin: 0 0 4px;
+      }
+      h1 {
+        font-size: clamp(28px, 7vw, 36px); font-weight: 700; letter-spacing: .01em;
+        text-transform: uppercase; margin: 0; line-height: 1.1;
+      }
+      .tagline { margin: 8px auto 0; max-width: 46ch; color: var(--ink-soft); font-size: 15px; line-height: 1.5; }
+      .tagline strong { color: var(--ink); }
+
+      /* Controls */
+      .controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin: 14px 0 10px; }
+      .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+      .seg button {
+        appearance: none; border: 0; border-right: 1px solid var(--border); background: var(--bg); cursor: pointer;
+        font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+        color: var(--ink-soft); padding: 9px 12px; line-height: 1;
+      }
+      .seg button:last-child { border-right: 0; }
+      .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+      .seg button:focus-visible, .btn:focus-visible, .pad:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+      .btn {
+        appearance: none; cursor: pointer; font: inherit;
+        font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 1;
+        border-radius: 4px; padding: 10px 14px;
+        border: 1px solid var(--border-strong); background: var(--bg); color: var(--ink);
+        display: inline-flex; align-items: center; gap: 7px;
+      }
+      .btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+      .btn.primary:hover { background: var(--green-dark); }
+      .btn:disabled { opacity: .4; cursor: default; }
+      .btn svg { width: 14px; height: 14px; flex: 0 0 auto; }
+      .controls-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray); }
+
+      /* Stats — flat Wordle-like tiles */
+      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+      .stat { border: 1px solid var(--border); border-radius: 4px; padding: 10px 4px 8px; text-align: center; background: var(--panel); }
+      .stat .v { font-size: 22px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+      .stat .k { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--gray); font-weight: 700; margin-top: 3px; }
+
+      /* Turn banner — makes state unmistakable */
+      .turn-banner {
+        border-radius: 4px; padding: 11px 12px; text-align: center;
+        font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+        border: 1px solid var(--border); background: var(--chip); color: var(--ink-soft);
+        margin-bottom: 10px; transition: background .15s, color .15s;
+      }
+      .turn-banner.watch { background: var(--gray); border-color: var(--gray); color: #fff; }
+      .turn-banner.yours { background: var(--green); border-color: var(--green); color: #fff; }
+      .turn-banner.bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+      .turn-banner.good { background: var(--yellow); border-color: var(--yellow); color: #1a1a1b; }
+
+      /* Board — flat minimal panel */
+      .board-frame { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; position: relative; }
+      .board-frame.shake { animation: shake .4s ease; }
+      @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
+      .board-top {
+        display: flex; justify-content: space-between; align-items: center; padding: 0 2px 12px;
+        font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--gray);
+      }
+      .lamp { display: inline-flex; align-items: center; gap: 7px; }
+      .lamp i { width: 10px; height: 10px; border-radius: 50%; background: var(--gray-light); border: 1px solid var(--border-strong); display: inline-block; }
+      .lamp.watch i { background: var(--yellow); border-color: var(--yellow); }
+      .lamp.done i { background: var(--green); border-color: var(--green); }
+      .lamp.over i { background: var(--bad); border-color: var(--bad); }
+      .lamp.yours i { background: var(--green); border-color: var(--green); }
+      .lives { display: inline-flex; gap: 5px; align-items: center; }
+      .lives i { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); display: inline-block; }
+      .lives i.spent { background: var(--gray-light); }
+
+      .disc { position: relative; max-width: 440px; margin: 0 auto; }
+      .pads { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .pad {
+        appearance: none; cursor: pointer; padding: 12px;
+        aspect-ratio: 1 / 1; border: 2px solid rgba(0,0,0,.18); border-radius: 8px;
+        position: relative; overflow: hidden;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+        color: #fff; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        transition: filter .12s ease, opacity .15s ease, outline-color .12s;
+      }
+      .pad-0 { background: var(--pad-green); border-radius: 16px 8px 8px 8px; }
+      .pad-1 { background: var(--pad-red); border-radius: 8px 16px 8px 8px; }
+      .pad-2 { background: var(--pad-yellow); border-radius: 8px 8px 8px 16px; color: #1a1a1b; }
+      .pad-3 { background: var(--pad-blue); border-radius: 8px 8px 16px 8px; }
+      /* Patterns — shown when labels/patterns are on */
+      .pads.show-labels .pad::before { content:""; position:absolute; inset:0; opacity:.18; pointer-events:none; }
+      .pads.show-labels .pad-0::before { background-image: radial-gradient(circle, #fff 2.2px, transparent 2.6px); background-size: 22px 22px; }
+      .pads.show-labels .pad-1::before { background-image: repeating-linear-gradient(45deg, #fff 0 3px, transparent 3px 16px); }
+      .pads.show-labels .pad-2::before { background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.7) 0 2px, transparent 2px 16px), repeating-linear-gradient(90deg, rgba(0,0,0,.7) 0 2px, transparent 2px 16px); }
+      .pads.show-labels .pad-3::before { background-image: repeating-linear-gradient(0deg, #fff 0 3px, transparent 3px 14px); }
+      .pad-shape { font-size: clamp(22px, 6vw, 32px); line-height: 1; position: relative; z-index: 1; display: none; }
+      .pad-label { font-size: clamp(11px, 3vw, 14px); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; position: relative; z-index: 1; display: none; }
+      .pad-key { font-size: 10px; font-weight: 700; letter-spacing: .08em; opacity: .85; position: relative; z-index: 1; display: none; }
+      .pads.show-labels .pad-shape, .pads.show-labels .pad-label, .pads.show-labels .pad-key { display: block; }
+      .pad.lit { filter: brightness(1.35) saturate(1.1); outline: 4px solid var(--ink); outline-offset: 2px; z-index: 2; }
+      .pad.missed { filter: brightness(1.3); outline: 4px solid var(--ink); outline-offset: 2px; animation: missedPulse 1s ease; }
+      @keyframes missedPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+      .pad:disabled { cursor: not-allowed; }
+      /* Visibly locked during playback */
+      .pads.locked .pad { filter: saturate(.3); opacity: .62; cursor: not-allowed; }
+      .pads.locked .pad.lit, .pads.locked .pad.missed { filter: brightness(1.35) saturate(1.05); opacity: 1; }
+      .lock-note { text-align:center; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gray); margin-top:10px; min-height:1.2em; }
+      .pads:not(.locked) + .lock-note { color: var(--green); }
+
+      .hub {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+        width: 36%; aspect-ratio: 1/1; border-radius: 50%;
+        background: var(--bg); border: 2px solid var(--border-strong);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; color: var(--ink); padding: 8px; pointer-events: none; z-index: 3;
+      }
+      .hub .hub-k { font-size: clamp(8px,2.2vw,10px); letter-spacing: .16em; text-transform: uppercase; color: var(--gray); font-weight: 700; }
+      .hub .hub-v { font-size: clamp(26px,8vw,38px); font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+      .hub .hub-s { font-size: clamp(10px,2.8vw,12px); color: var(--ink-soft); font-weight: 700; line-height: 1.25; max-width: 16ch; text-transform: uppercase; letter-spacing: .04em; }
+
+      .under { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+      .progress { height: 8px; border-radius: 2px; background: var(--chip); border: 1px solid var(--border); overflow: hidden; margin-top: 14px; }
+      .progress i { display: block; height: 100%; width: 0%; background: var(--green); transition: width .25s ease; }
+      .progress-note { text-align: center; color: var(--ink-soft); font-size: 14px; margin: 8px 0 0; min-height: 1.35em; line-height: 1.45; }
+      .seq-dots { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-top: 10px; min-height: 10px; }
+      .seq-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--bg); border: 1.5px solid var(--border-strong); display: inline-block; }
+      .seq-dots i.got { background: var(--green); border-color: var(--green); }
+      .seq-dots i.now { background: var(--yellow); border-color: var(--yellow); }
+
+      .win { display: none; margin-top: 16px; background: var(--good-bg); border: 1px solid var(--green); border-radius: 8px; padding: 18px 20px; text-align: center; }
+      .win.show { display: block; }
+      .win.over { background: var(--bad-bg); border-color: var(--bad); }
+      .win h2 { font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; margin: 0 0 6px; }
+      .win p { margin: 0 0 14px; color: var(--ink-soft); font-size: 15px; line-height: 1.5; }
+      .win p strong { color: var(--ink); }
+      .win .btn { background: var(--green); border-color: var(--green); color: #fff; }
+      .win.over .btn { background: var(--bad); border-color: var(--bad); color: #fff; }
+
+      .howto { margin-top: 24px; border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; background: var(--panel); }
+      .howto h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 12px; font-weight: 700; }
+      .howto ol { margin: 0; padding-left: 20px; color: var(--ink-soft); font-size: 15px; line-height: 1.65; }
+      .howto ol strong { color: var(--ink); }
+      .howto .tip { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--border); color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+      .keys { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; color: var(--ink-soft); font-size: 13.5px; }
+      .keys b { font-weight: 700; color: var(--ink); background: var(--chip); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 7px; }
+      footer { text-align: center; margin-top: 22px; color: var(--gray); font-size: 13px; }
+
+      .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 40; }
+      .confetti span { position: absolute; top: -14px; border-radius: 2px; animation: fall linear forwards; }
+      @keyframes fall { to { transform: translateY(108vh) rotate(680deg); opacity: .9; } }
+
+      /* Statistics modal — NYT Wordle style */
+      .modal-overlay {
+        position: fixed; inset: 0; background: rgba(255,255,255,.72); z-index: 60;
+        display: none; align-items: flex-start; justify-content: center; padding: 24px 16px 32px; overflow-y: auto;
+      }
+      @media (prefers-color-scheme: dark) { .modal-overlay { background: rgba(0,0,0,.62); } }
+      .modal-overlay.open { display: flex; }
+      .modal {
+        background: var(--bg); color: var(--ink); border: 1px solid var(--border); border-radius: 8px;
+        width: 100%; max-width: 520px; padding: 28px 28px 24px; position: relative;
+        box-shadow: 0 8px 30px rgba(0,0,0,.14); margin: auto 0;
+      }
+      .modal-close {
+        position: absolute; right: 12px; top: 10px; appearance: none; background: transparent; border: 0;
+        font-size: 26px; line-height: 1; cursor: pointer; color: var(--ink); padding: 6px 8px; border-radius: 4px;
+      }
+      .modal-close:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+      .modal h2.modal-title {
+        font-size: 16px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+        text-align: center; margin: 4px 0 18px;
+      }
+      .modal h3.modal-sub {
+        font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+        margin: 26px 0 12px; text-align: left;
+      }
+      .modal-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
+      .modal-stats .ms-v { font-size: 34px; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; }
+      .modal-stats .ms-k { font-size: 11px; line-height: 1.25; color: var(--ink); margin-top: 6px; }
+      .dist-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 14px; }
+      .dist-label { width: 44px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+      .dist-track { flex: 1 1 auto; min-width: 0; }
+      .dist-bar {
+        background: var(--gray); color: #fff; font-weight: 700; font-size: 13px; line-height: 1;
+        padding: 5px 7px; text-align: right; min-width: 26px; width: 4%; box-sizing: border-box;
+      }
+      .dist-bar.current { background: var(--green); }
+      .dist-note { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin: 10px 0 0; }
+      .badges-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .badge {
+        border: 1px solid var(--border); border-radius: 6px; padding: 12px 8px 10px; text-align: center; background: var(--panel);
+      }
+      .badge-medal {
+        width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 15px; line-height: 1; border: 2px solid var(--border-strong);
+        background: var(--gray); color: #fff; letter-spacing: -.02em;
+      }
+      .badge.earned .badge-medal { background: var(--green); border-color: var(--green-dark); color: #fff; }
+      .badge.earned.gold .badge-medal { background: var(--yellow); border-color: #a8943f; color: #1a1a1b; }
+      .badge.locked { opacity: .62; }
+      .badge.locked .badge-medal { background: var(--gray-light); border-color: var(--border); color: var(--gray); }
+      .badge.superseded { opacity: .72; }
+      .badge.superseded .badge-medal { background: var(--chip); border-color: var(--border-strong); color: var(--ink-soft); }
+      .badge.highlight { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+      .badge.highlight .badge-medal { background: var(--green); border-color: var(--green-dark); color: #fff; }
+      .badge-name { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; line-height: 1.3; }
+      .badge-how { font-size: 11.5px; color: var(--ink-soft); line-height: 1.4; margin-top: 4px; }
+      .badge-state { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: 6px; color: var(--green); }
+      .badge.locked .badge-state { color: var(--gray); }
+      .badge.superseded .badge-state { color: var(--gray); }
+      .modal-foot { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; align-items: center; }
+      .modal-local { text-align: center; font-size: 12px; color: var(--ink-soft); margin: 12px 0 0; line-height: 1.5; }
+      @media (max-width: 480px) {
+        .modal { padding: 24px 18px 20px; }
+        .badges-grid { grid-template-columns: repeat(2, 1fr); }
+        .modal-stats .ms-v { font-size: 28px; }
+      }
+
+      /* Badge toast */
+      .badge-toast {
+        position: fixed; left: 50%; top: 18px; transform: translate(-50%, -16px); z-index: 80;
+        background: #1a1a1b; color: #fff; border-radius: 6px; padding: 12px 16px;
+        font-size: 14px; font-weight: 700; text-align: center; max-width: min(92vw, 420px);
+        opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease;
+        box-shadow: 0 6px 24px rgba(0,0,0,.25); line-height: 1.4;
+      }
+      .badge-toast.show { opacity: 1; transform: translate(-50%, 0); }
+      .badge-toast small { display: block; font-weight: 400; font-size: 12.5px; opacity: .88; margin-top: 2px; }
+      @media (prefers-color-scheme: dark) { .badge-toast { background: #fff; color: #1a1a1b; } }
+
+      @media (max-width: 430px) { .stats { grid-template-columns: repeat(2,1fr); } }
+      @media (prefers-reduced-motion: reduce) {
+        .pad, .progress i, .btn { transition: none; }
+        .board-frame.shake, .pad.missed { animation: none; }
+        .confetti { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="header-actions">
+          <button class="icon-btn" id="statsBtn" type="button" aria-label="Statistics and badges" title="Statistics">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="12" width="3.5" height="7" fill="currentColor"/><rect x="10.25" y="8" width="3.5" height="11" fill="currentColor"/><rect x="16.5" y="4" width="3.5" height="15" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <p class="eyebrow">A memory button game</p>
+        <h1>Benjamin&rsquo;s Simon</h1>
+        <p class="tagline">Simon lights up a tune, one note longer every round. <strong>Watch, listen, then play it back</strong> on the big coloured pads.</p>
+      </header>
+
+      <div class="controls" role="group" aria-label="Game mode">
+        <div class="seg" id="modeSeg" aria-label="Mistakes allowed">
+          <button type="button" data-mode="chill" aria-pressed="true">Chill · 3 lives</button>
+          <button type="button" data-mode="strict" aria-pressed="false">Strict · 1 mistake</button>
+        </div>
+        <button class="btn primary" id="newGameBtn" type="button">New game</button>
+      </div>
+      <div class="controls" role="group" aria-label="Playback speed" style="margin-top:0;">
+        <div class="seg" id="speedSeg">
+          <button type="button" data-speed="relaxed" aria-pressed="false">Relaxed</button>
+          <button type="button" data-speed="classic" aria-pressed="true">Classic</button>
+          <button type="button" data-speed="turbo" aria-pressed="false">Turbo</button>
+        </div>
+        <span class="controls-label">Base speed</span>
+        <button class="btn" id="cbBtn" type="button" aria-pressed="true">Labels &amp; patterns: On</button>
+      </div>
+      <p class="progress-note" style="margin-top:2px;font-size:13px;">Early rounds always play slowly, then Simon speeds up. Each pad also has its own shape, label, pattern and tone.</p>
+
+      <div class="stats" aria-label="Game statistics">
+        <div class="stat"><div class="v" id="statRound">0</div><div class="k">Round</div></div>
+        <div class="stat"><div class="v" id="statBest">&mdash;</div><div class="k">Best round</div></div>
+        <div class="stat"><div class="v" id="statNotes">0</div><div class="k">Notes hit</div></div>
+        <div class="stat"><div class="v" id="statTime">0:00</div><div class="k">Time</div></div>
+      </div>
+
+      <div class="turn-banner" id="turnBanner" role="status" aria-live="polite">Press New Game to start</div>
+
+      <div class="board-frame" id="boardFrame">
+        <div class="board-top">
+          <span class="lamp" id="lamp"><i></i><span id="lampText">Press New game</span></span>
+          <span class="lives" id="lives" aria-label="Lives remaining"><i></i><i></i><i></i></span>
+        </div>
+        <div class="disc">
+          <div class="pads locked show-labels" id="pads" role="group" aria-label="Simon pads">
+            <button type="button" class="pad pad-0" data-pad="0" aria-label="Green pad, triangle, top left" disabled><span class="pad-shape" aria-hidden="true">▲</span><span class="pad-label">Green</span><span class="pad-key">Key 1 · Dots</span></button>
+            <button type="button" class="pad pad-1" data-pad="1" aria-label="Red pad, circle, top right" disabled><span class="pad-shape" aria-hidden="true">●</span><span class="pad-label">Red</span><span class="pad-key">Key 2 · Stripes</span></button>
+            <button type="button" class="pad pad-2" data-pad="2" aria-label="Yellow pad, square, bottom left" disabled><span class="pad-shape" aria-hidden="true">■</span><span class="pad-label">Yellow</span><span class="pad-key">Key 3 · Grid</span></button>
+            <button type="button" class="pad pad-3" data-pad="3" aria-label="Blue pad, diamond, bottom right" disabled><span class="pad-shape" aria-hidden="true">◆</span><span class="pad-label">Blue</span><span class="pad-key">Key 4 · Lines</span></button>
+          </div>
+          <div class="lock-note" id="lockNote">Pads locked</div>
+          <div class="hub" aria-hidden="true">
+            <div class="hub-k">Round</div>
+            <div class="hub-v" id="hubRound">&mdash;</div>
+            <div class="hub-s" id="hubStatus">Ready</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+      <div class="seq-dots" id="seqDots" aria-hidden="true"></div>
+      <p class="progress-note" id="progressNote">Press New game and Simon will play the first note.</p>
+
+      <div class="under">
+        <button class="btn" id="watchBtn" type="button" disabled>Watch again</button>
+        <button class="btn" id="restartBtn" type="button" disabled>Restart game</button>
+        <button class="btn" id="soundBtn" type="button" aria-pressed="true"><span id="soundLabel">Sound on</span></button>
+      </div>
+
+      <section class="win" id="endBox" aria-live="polite">
+        <h2 id="endTitle">Game over</h2>
+        <p id="endText"></p>
+        <button class="btn" id="againBtn" type="button">Play again</button>
+      </section>
+
+      <section class="howto">
+        <h2>How to play</h2>
+        <ol>
+          <li><strong>Press New game.</strong> Simon lights one pad and plays its note — slowly in the first few rounds, faster as you climb.</li>
+          <li><strong>Wait for YOUR TURN.</strong> The banner turns green and the pads unlock. While Simon plays, the banner says WATCH and the pads stay visibly dimmed and locked, so a tap can&rsquo;t count as a mistake.</li>
+          <li><strong>Play it back</strong> by pressing the same pads. Get it right and Simon adds one more note.</li>
+          <li><strong>Made a mistake?</strong> In Chill mode Simon slowly replays <em>just the note you missed</em>, outlined on its pad, then it&rsquo;s your turn again from exactly where you left off. In Strict mode, one wrong pad ends the game.</li>
+          <li><strong>Colourblind help:</strong> leave Labels &amp; patterns on — every pad has a different shape (▲ ● ■ ◆), name, pattern and tone, not colour alone.</li>
+        </ol>
+        <p class="tip"><strong>A memory trick:</strong> say the shapes or colours out loud as Simon plays — &ldquo;triangle, circle, circle, diamond&rdquo; — and give the tune a rhythm. Reach round 20 and you&rsquo;ve beaten Simon.</p>
+        <div class="keys" aria-label="Keyboard controls">
+          <span><b>1</b> green ▲</span><span><b>2</b> red ●</span><span><b>3</b> yellow ■</span><span><b>4</b> blue ◆</span><span>— or Q / W / A / S</span>
+        </div>
+      </section>
+
+      <footer>Benjamin&rsquo;s Simon — a Simon-style memory game. Statistics and badges are saved on this device only.</footer>
+    </div>
+
+    <!-- Statistics & Badges modal — NYT Wordle style -->
+    <div class="modal-overlay" id="statsOverlay" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+      <div class="modal">
+        <button class="modal-close" id="statsClose" type="button" aria-label="Close statistics">&times;</button>
+        <h2 class="modal-title" id="statsTitle">Statistics</h2>
+        <div class="modal-stats" aria-label="Career statistics">
+          <div><div class="ms-v" id="msPlayed">0</div><div class="ms-k">Played</div></div>
+          <div><div class="ms-v" id="msWinPct">0</div><div class="ms-k">Win %</div></div>
+          <div><div class="ms-v" id="msStreak">0</div><div class="ms-k">Current Streak</div></div>
+          <div><div class="ms-v" id="msMaxStreak">0</div><div class="ms-k">Max Streak</div></div>
+        </div>
+        <p class="dist-note" style="text-align:center;margin-top:10px;">Streaks count consecutive wins in a row — not calendar days.</p>
+
+        <h3 class="modal-sub">Best round reached</h3>
+        <div id="distChart" aria-label="Distribution of best round reached"></div>
+        <p class="dist-note">Each finished game counts once, by the best round you completed. Round 20 is a win.</p>
+
+        <h3 class="modal-sub">Badges</h3>
+        <div class="badges-grid" id="badgesGrid"></div>
+
+        <div class="modal-foot">
+          <button class="btn primary" id="statsPlayBtn" type="button">Play again</button>
+          <button class="btn" id="statsDoneBtn" type="button">Done</button>
+        </div>
+        <p class="modal-local">Saved locally on this device only — not an NYT account, and nothing is sent anywhere.</p>
+      </div>
+    </div>
+
+    <div class="badge-toast" id="badgeToast" role="status" aria-live="polite"></div>
+
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+    <script>
+      (function () {
+        "use strict";
+        var PAD_NAMES = ["Green", "Red", "Yellow", "Blue"];
+        var PAD_SHAPES = ["triangle", "circle", "square", "diamond"];
+        var PAD_FREQ = [392.00, 329.63, 261.63, 493.88];
+        var SPEEDS = {
+          relaxed: { on: 520, gap: 180 },
+          classic: { on: 380, gap: 130 },
+          turbo:   { on: 250, gap: 85 }
+        };
+        var WIN_ROUND = 20;
+
+        var sequence = [], playerIndex = 0, phase = "idle";
+        var strict = false, lives = 3, speed = "classic";
+        var notesHit = 0, bestRound = 0, replays = 0, soundOn = true;
+        var playToken = 0, timers = [];
+        var startedAt = null, elapsedBase = 0, timerId = null, celebrated10 = false;
+        var mistakesThisGame = 0, gameBest = 0, gameRecorded = false, perfectChecked = false;
+
+        /* ---------- Persistent statistics & badges (local device only) ---------- */
+        var STATS_KEY = "benjamins-simon-stats-v1";
+        var DIST_BUCKETS = ["1-4", "5-9", "10-14", "15-19", "20"];
+        var BADGE_DEFS = [
+          { id: "firstWin", name: "First Win", symbol: "★", gold: false, how: "Win your first game — clear round 20." },
+          { id: "round20", name: "Round 20 Win", symbol: "20", gold: true, how: "Beat Simon by clearing round 20." },
+          { id: "perfectRun", name: "Perfect Run", symbol: "◆", gold: false, how: "Reach round 10 with no mistakes in Chill mode." },
+          { id: "streak3", name: "3 Win Streak", symbol: "3", gold: false, streak: 3, how: "Win 3 games in a row." },
+          { id: "streak7", name: "7 Win Streak", symbol: "7", gold: false, streak: 7, how: "Win 7 games in a row." },
+          { id: "streak14", name: "14 Win Streak", symbol: "14", gold: false, streak: 14, how: "Win 14 games in a row." },
+          { id: "streak30", name: "30 Win Streak", symbol: "30", gold: true, streak: 30, how: "Win 30 games in a row." },
+          { id: "games10", name: "10 Games", symbol: "10", gold: false, how: "Play 10 games." },
+          { id: "games50", name: "50 Games", symbol: "50", gold: false, how: "Play 50 games." },
+          { id: "games100", name: "100 Games", symbol: "100", gold: true, how: "Play 100 games." }
+        ];
+        function defaultStats() {
+          return { played: 0, wins: 0, currentStreak: 0, maxStreak: 0, distribution: { "1-4": 0, "5-9": 0, "10-14": 0, "15-19": 0, "20": 0 }, lastBucket: null, perfectRun: false };
+        }
+        function loadStats() {
+          try {
+            var raw = window.localStorage.getItem(STATS_KEY);
+            if (!raw) return defaultStats();
+            var s = JSON.parse(raw), d = defaultStats();
+            s.played = +s.played || 0; s.wins = +s.wins || 0; s.currentStreak = +s.currentStreak || 0; s.maxStreak = +s.maxStreak || 0;
+            s.distribution = s.distribution || d.distribution;
+            DIST_BUCKETS.forEach(function (b) { s.distribution[b] = +s.distribution[b] || 0; });
+            s.perfectRun = !!s.perfectRun;
+            return s;
+          } catch (e) { return defaultStats(); }
+        }
+        var career = loadStats();
+        function saveStats() { try { window.localStorage.setItem(STATS_KEY, JSON.stringify(career)); } catch (e) {} }
+        function isBadgeEarned(id) {
+          if (id === "firstWin") return career.wins >= 1;
+          if (id === "round20") return career.wins >= 1;
+          if (id === "perfectRun") return !!career.perfectRun;
+          if (id === "streak3") return career.maxStreak >= 3;
+          if (id === "streak7") return career.maxStreak >= 7;
+          if (id === "streak14") return career.maxStreak >= 14;
+          if (id === "streak30") return career.maxStreak >= 30;
+          if (id === "games10") return career.played >= 10;
+          if (id === "games50") return career.played >= 50;
+          if (id === "games100") return career.played >= 100;
+          return false;
+        }
+        function earnedSet() { var o = {}; BADGE_DEFS.forEach(function (b) { if (isBadgeEarned(b.id)) o[b.id] = true; }); return o; }
+        var toastQueue = [], toastBusy = false;
+        function showNextToast() {
+          if (!toastQueue.length) { toastBusy = false; return; }
+          toastBusy = true;
+          var b = toastQueue.shift();
+          var el = document.getElementById("badgeToast");
+          el.innerHTML = "";
+          var strong = document.createElement("span"); strong.textContent = "Badge unlocked: " + b.name;
+          var small = document.createElement("small"); small.textContent = b.how;
+          el.appendChild(strong); el.appendChild(small);
+          el.classList.add("show");
+          setTimeout(function () { el.classList.remove("show"); setTimeout(showNextToast, 350); }, 3400);
+        }
+        function queueBadgeToasts(before) {
+          BADGE_DEFS.forEach(function (b) { if (!before[b.id] && isBadgeEarned(b.id)) toastQueue.push(b); });
+          if (toastQueue.length && !toastBusy) showNextToast();
+        }
+        function bucketFor(n) {
+          if (n >= 20) return "20";
+          if (n >= 15) return "15-19";
+          if (n >= 10) return "10-14";
+          if (n >= 5) return "5-9";
+          return "1-4";
+        }
+        function checkPerfectRun() {
+          if (perfectChecked) return;
+          if (!strict && mistakesThisGame === 0 && sequence.length >= 10) {
+            perfectChecked = true;
+            if (!career.perfectRun) {
+              var before = earnedSet();
+              career.perfectRun = true; saveStats();
+              queueBadgeToasts(before);
+            }
+          }
+          if (sequence.length >= 10) perfectChecked = true;
+        }
+        function recordGameEnd(wonGame) {
+          if (gameRecorded) return;
+          gameRecorded = true;
+          var before = earnedSet();
+          var bucket = bucketFor(wonGame ? WIN_ROUND : gameBest);
+          career.played += 1;
+          if (wonGame) { career.wins += 1; career.currentStreak += 1; if (career.currentStreak > career.maxStreak) career.maxStreak = career.currentStreak; }
+          else { career.currentStreak = 0; }
+          career.distribution[bucket] = (career.distribution[bucket] || 0) + 1;
+          career.lastBucket = bucket;
+          saveStats();
+          queueBadgeToasts(before);
+          renderStatsModal();
+          setTimeout(function () { openStats(); }, 1200);
+        }
+        function renderStatsModal() {
+          var played = career.played, winPct = played ? Math.round((career.wins / played) * 100) : 0;
+          document.getElementById("msPlayed").textContent = played;
+          document.getElementById("msWinPct").textContent = winPct;
+          document.getElementById("msStreak").textContent = career.currentStreak;
+          document.getElementById("msMaxStreak").textContent = career.maxStreak;
+          var maxCount = 0;
+          DIST_BUCKETS.forEach(function (b) { if (career.distribution[b] > maxCount) maxCount = career.distribution[b]; });
+          var chart = document.getElementById("distChart"); chart.innerHTML = "";
+          DIST_BUCKETS.forEach(function (b) {
+            var count = career.distribution[b] || 0;
+            var row = document.createElement("div"); row.className = "dist-row";
+            var lab = document.createElement("div"); lab.className = "dist-label"; lab.textContent = b;
+            var track = document.createElement("div"); track.className = "dist-track";
+            var bar = document.createElement("div"); bar.className = "dist-bar" + (career.lastBucket === b && played > 0 ? " current" : "");
+            bar.style.width = maxCount ? Math.max(9, Math.round((count / maxCount) * 100)) + "%" : "9%";
+            bar.textContent = count;
+            track.appendChild(bar); row.appendChild(lab); row.appendChild(track); chart.appendChild(row);
+          });
+          // Badges: only the highest earned streak badge is highlighted
+          var streakDefs = BADGE_DEFS.filter(function (b) { return !!b.streak; });
+          var highestStreakId = null;
+          streakDefs.forEach(function (b) { if (isBadgeEarned(b.id)) highestStreakId = b.id; });
+          var grid = document.getElementById("badgesGrid"); grid.innerHTML = "";
+          BADGE_DEFS.forEach(function (b) {
+            var earned = isBadgeEarned(b.id);
+            var isStreak = !!b.streak;
+            var card = document.createElement("div");
+            var cls = "badge";
+            if (isStreak && earned && b.id === highestStreakId) cls += " earned highlight";
+            else if (isStreak && earned) cls += " superseded";
+            else if (earned) cls += " earned" + (b.gold ? " gold" : "");
+            else cls += " locked";
+            card.className = cls;
+            var medal = document.createElement("div"); medal.className = "badge-medal"; medal.textContent = b.symbol; medal.setAttribute("aria-hidden", "true");
+            var name = document.createElement("div"); name.className = "badge-name"; name.textContent = b.name;
+            var how = document.createElement("div"); how.className = "badge-how"; how.textContent = b.how;
+            var state = document.createElement("div"); state.className = "badge-state";
+            state.textContent = (isStreak && earned && b.id !== highestStreakId) ? "Earned" : (earned ? "Earned" : "Locked");
+            card.appendChild(medal); card.appendChild(name); card.appendChild(how); card.appendChild(state);
+            grid.appendChild(card);
+          });
+        }
+        function openStats() { renderStatsModal(); document.getElementById("statsOverlay").classList.add("open"); var c = document.getElementById("statsClose"); if (c) c.focus(); }
+        function closeStats() { document.getElementById("statsOverlay").classList.remove("open"); }
+
+        var frameEl = document.getElementById("boardFrame");
+        var padsEl = document.getElementById("pads");
+        var padEls = Array.prototype.slice.call(padsEl.querySelectorAll(".pad"));
+        var statRound = document.getElementById("statRound");
+        var statBest = document.getElementById("statBest");
+        var statNotes = document.getElementById("statNotes");
+        var statTime = document.getElementById("statTime");
+        var lamp = document.getElementById("lamp");
+        var lampText = document.getElementById("lampText");
+        var livesEl = document.getElementById("lives");
+        var hubRound = document.getElementById("hubRound");
+        var hubStatus = document.getElementById("hubStatus");
+        var progressBar = document.getElementById("progressBar");
+        var progressNote = document.getElementById("progressNote");
+        var seqDots = document.getElementById("seqDots");
+        var watchBtn = document.getElementById("watchBtn");
+        var restartBtn = document.getElementById("restartBtn");
+        var endBox = document.getElementById("endBox");
+        var endTitle = document.getElementById("endTitle");
+        var endText = document.getElementById("endText");
+        var turnBanner = document.getElementById("turnBanner");
+        var lockNote = document.getElementById("lockNote");
+
+        function now() { return Date.now(); }
+        function elapsedMs() { return startedAt === null ? elapsedBase : elapsedBase + (now() - startedAt); }
+        function fmtTime(ms) {
+          var s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+          var ss = ("0" + (s % 60)).slice(-2);
+          if (h > 0) return h + ":" + ("0" + (m % 60)).slice(-2) + ":" + ss;
+          return m + ":" + ss;
+        }
+        function startTimer() { if (timerId !== null) return; timerId = setInterval(function () { statTime.textContent = fmtTime(elapsedMs()); }, 250); }
+        function stopTimer() { if (timerId !== null) { clearInterval(timerId); timerId = null; } }
+
+        var audioCtx = null;
+        function ensureAudio() {
+          try {
+            if (!audioCtx) { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; audioCtx = new AC(); }
+            if (audioCtx.state === "suspended") audioCtx.resume();
+            return audioCtx;
+          } catch (e) { return null; }
+        }
+        function tone(freq, durMs, type, vol) {
+          if (!soundOn) return;
+          var ctx = ensureAudio(); if (!ctx) return;
+          try {
+            var t = ctx.currentTime, osc = ctx.createOscillator(), gain = ctx.createGain();
+            osc.type = type || "triangle"; osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(vol || 0.16, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + durMs / 1000);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(t); osc.stop(t + durMs / 1000 + 0.05);
+          } catch (e) {}
+        }
+        function padTone(i, durMs) { tone(PAD_FREQ[i], durMs || 260, "triangle", 0.18); }
+        function buzz() { tone(138, 420, "sawtooth", 0.10); }
+        function roundChime() { if (!soundOn) return; [523.25, 659.25, 783.99].forEach(function (f, i) { setTimeout(function () { tone(f, 200, "triangle", 0.13); }, i * 85); }); }
+        function winChime() { if (!soundOn) return; [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { setTimeout(function () { tone(f, 260, "triangle", 0.14); }, i * 110); }); }
+
+        function later(fn, ms) { var id = setTimeout(fn, ms); timers.push(id); return id; }
+        function clearTimers() { timers.forEach(function (id) { clearTimeout(id); }); timers = []; playToken++; }
+
+        function lightPad(i, durMs, missedClass) {
+          var el = padEls[i];
+          el.classList.add(missedClass ? "missed" : "lit");
+          padTone(i, Math.max(200, durMs - 40));
+          later(function () { el.classList.remove("lit"); el.classList.remove("missed"); }, durMs);
+        }
+
+        // Slow for the first few rounds, then speed up — on top of the chosen base speed.
+        function timing() {
+          var base = SPEEDS[speed];
+          var round = Math.max(1, sequence.length);
+          var factor;
+          if (round <= 2) factor = 1.7;        // rounds 1–2: deliberately slow
+          else if (round <= 4) factor = 1.4;   // rounds 3–4: still gentle
+          else if (round <= 6) factor = 1.15;  // rounds 5–6: easing in
+          else factor = Math.max(0.6, 1 - (round - 6) * 0.03); // then gradually faster
+          return { on: Math.round(base.on * factor), gap: Math.round(base.gap * Math.max(0.7, factor)) };
+        }
+
+        function newGame() {
+          clearTimers();
+          padEls.forEach(function (el) { el.classList.remove("lit", "missed"); });
+          sequence = []; playerIndex = 0;
+          mistakesThisGame = 0; gameBest = 0; gameRecorded = false; perfectChecked = false;
+          lives = strict ? 1 : 3; notesHit = 0; replays = 0; celebrated10 = false;
+          elapsedBase = 0; startedAt = now(); startTimer();
+          endBox.classList.remove("show", "over");
+          nextRound(true);
+        }
+
+        function nextRound(first) {
+          sequence.push(Math.floor(Math.random() * 4));
+          playerIndex = 0;
+          checkPerfectRun();
+          if (!first) roundChime();
+          render("getready");
+          later(function () { playSequence(); }, first ? 600 : 850);
+        }
+
+        function playSequence() {
+          if (phase === "over" || phase === "won") return;
+          phase = "showing"; playerIndex = 0; render("showing", 0);
+          var t = timing(), token = playToken, delay = 400;
+          sequence.forEach(function (padIdx, i) {
+            later(function () { if (token !== playToken) return; lightPad(padIdx, t.on); render("showing", i + 1); }, delay);
+            delay += t.on + t.gap;
+          });
+          later(function () { if (token !== playToken) return; phase = "input"; playerIndex = 0; render("input"); }, delay + 150);
+        }
+
+        // After a mistake in Chill mode: replay ONLY the missed note, slowly.
+        function replayMissedNote(correctIdx) {
+          phase = "showing"; render("missed-replay", correctIdx);
+          var token = playToken;
+          later(function () {
+            if (token !== playToken) return;
+            lightPad(correctIdx, 950, true); // long, slow flash
+          }, 500);
+          later(function () {
+            if (token !== playToken) return;
+            phase = "input"; render("input-after-miss", correctIdx);
+          }, 1750);
+        }
+
+        function pressPad(i) {
+          if (phase !== "input") return; // locked outside Your Turn — taps never count
+          lightPad(i, 240);
+          if (i === sequence[playerIndex]) {
+            playerIndex++; notesHit++;
+            if (playerIndex >= sequence.length) {
+              phase = "between";
+              var finishedRound = sequence.length;
+              gameBest = finishedRound;
+              if (finishedRound > bestRound) bestRound = finishedRound;
+              render("roundclear");
+              if (finishedRound === 10 && !celebrated10) { celebrated10 = true; later(confetti, 250); }
+              if (finishedRound >= WIN_ROUND) later(onWin, 800);
+              else later(function () { nextRound(false); }, 950);
+            } else { render("input"); }
+          } else { onWrong(i); }
+        }
+
+        function onWrong(i) {
+          mistakesThisGame++;
+          buzz();
+          frameEl.classList.remove("shake"); void frameEl.offsetWidth; frameEl.classList.add("shake");
+          later(function () { frameEl.classList.remove("shake"); }, 450);
+          var correctIdx = sequence[playerIndex];
+          lives--;
+          if (lives > 0) {
+            phase = "between"; render("wrong-retry", i);
+            later(function () { replayMissedNote(correctIdx); }, 1100);
+          } else {
+            phase = "over"; elapsedBase = elapsedMs(); startedAt = null; stopTimer();
+            render("over", i); showEnd(false); recordGameEnd(false);
+          }
+        }
+
+        function onWin() {
+          phase = "won"; elapsedBase = elapsedMs(); startedAt = null; stopTimer();
+          gameBest = WIN_ROUND;
+          bestRound = Math.max(bestRound, WIN_ROUND); render("won"); winChime(); confetti(); showEnd(true); recordGameEnd(true);
+        }
+
+        function showEnd(wonGame) {
+          var completed = wonGame ? WIN_ROUND : Math.max(0, bestRound);
+          endBox.classList.toggle("over", !wonGame); endBox.classList.add("show");
+          if (wonGame) {
+            endTitle.textContent = "You beat Simon!";
+            endText.innerHTML = "Twenty rounds, note perfect, in <strong>" + fmtTime(elapsedBase) + "</strong> with <strong>" + notesHit + " notes hit</strong>.";
+          } else {
+            endTitle.textContent = "Game over";
+            endText.innerHTML = "The tune got away at <strong>round " + sequence.length + "</strong>. You completed <strong>" + completed + (completed === 1 ? " round" : " rounds") + "</strong> and hit <strong>" + notesHit + " notes</strong> in " + fmtTime(elapsedBase) + "." + (bestRound > 0 ? " Your best this session is round " + bestRound + "." : "");
+          }
+        }
+
+        function restartGame() { if (phase === "idle") return; newGame(); }
+        function watchAgain() { if (phase !== "input") return; replays++; playSequence(); }
+
+        function confetti() {
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          var box = document.getElementById("confetti"); box.innerHTML = "";
+          var colors = ["#538d4e", "#c9b458", "#787c7e", "#c0543f", "#4a6fa5"];
+          for (var i = 0; i < 42; i++) {
+            var s = document.createElement("span"), sz = 6 + Math.random() * 7;
+            s.style.left = (Math.random() * 100) + "vw";
+            s.style.width = sz + "px"; s.style.height = (sz * (0.5 + Math.random() * 0.9)) + "px";
+            s.style.background = colors[i % colors.length];
+            s.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
+            s.style.animationDelay = (Math.random() * 0.5) + "s";
+            box.appendChild(s);
+          }
+          setTimeout(function () { box.innerHTML = ""; }, 4200);
+        }
+
+        function setBanner(cls, text) { turnBanner.className = "turn-banner" + (cls ? " " + cls : ""); turnBanner.textContent = text; }
+
+        function render(state, extra) {
+          var round = sequence.length;
+          statRound.textContent = round;
+          statBest.textContent = bestRound === 0 ? "—" : bestRound;
+          statNotes.textContent = notesHit;
+          statTime.textContent = fmtTime(elapsedMs());
+          hubRound.textContent = round === 0 ? "—" : round;
+
+          var locked = phase !== "input";
+          padsEl.classList.toggle("locked", locked);
+          padEls.forEach(function (el) { el.disabled = locked; });
+          lockNote.textContent = locked ? "Pads locked — just watch & listen" : "Pads unlocked — your turn";
+
+          var totalLives = strict ? 1 : 3;
+          livesEl.innerHTML = "";
+          for (var li = 0; li < totalLives; li++) { var pip = document.createElement("i"); if (li >= lives) pip.className = "spent"; livesEl.appendChild(pip); }
+          livesEl.setAttribute("aria-label", strict ? "Strict mode: one mistake ends the game" : lives + " of 3 lives remaining");
+
+          lamp.className = "lamp";
+          if (state === "showing") {
+            var shown = typeof extra === "number" ? extra : 0;
+            lamp.classList.add("watch"); lampText.textContent = "Watch Simon"; hubStatus.textContent = "Watch";
+            setBanner("watch", "Watch — pads locked");
+            progressNote.textContent = "Simon is playing — note " + Math.max(1, shown) + " of " + round + "." + (round <= 4 ? " (Slow playback for the early rounds.)" : "");
+            progressBar.style.width = round ? Math.round((shown / round) * 100) + "%" : "0%";
+          } else if (state === "missed-replay") {
+            lamp.classList.add("watch"); lampText.textContent = "Missed note"; hubStatus.textContent = "Watch the missed note";
+            setBanner("watch", "Watch — here is the note you missed");
+            progressNote.textContent = "That note was " + PAD_NAMES[extra] + " (" + PAD_SHAPES[extra] + ") — Simon is replaying just that one, slowly. Then tap it yourself to carry on.";
+            progressBar.style.width = "0%";
+          } else if (state === "input" || state === "input-after-miss") {
+            lamp.classList.add("yours"); lampText.textContent = "Your turn"; hubStatus.textContent = "Your turn";
+            setBanner("yours", "★ Your turn — tap the pads ★");
+            progressNote.textContent = state === "input-after-miss"
+              ? "Your turn again — tap " + PAD_NAMES[extra] + " (" + PAD_SHAPES[extra] + ") and keep going from note " + (playerIndex + 1) + " of " + round + "."
+              : "Your turn — play back " + round + (round === 1 ? " note" : " notes") + (replays > 0 ? " · watched again " + replays + (replays === 1 ? " time" : " times") : "") + ".";
+            progressBar.style.width = round ? Math.round((playerIndex / round) * 100) + "%" : "0%";
+          } else if (state === "getready") {
+            lampText.textContent = "Get ready"; hubStatus.textContent = "Get ready";
+            setBanner("", "Get ready…");
+            progressNote.textContent = "Round " + round + " — Simon is about to play " + round + (round === 1 ? " note" : " notes") + "." + (round <= 4 ? " Early rounds play slowly." : "");
+            progressBar.style.width = "0%";
+          } else if (state === "roundclear") {
+            lamp.classList.add("done"); lampText.textContent = "Round clear"; hubStatus.textContent = "Got it!";
+            setBanner("good", "Round clear");
+            progressNote.textContent = "Round " + round + " complete. One more note coming up…";
+            progressBar.style.width = "100%";
+          } else if (state === "wrong-retry") {
+            lamp.classList.add("over"); lampText.textContent = "Wrong pad"; hubStatus.textContent = "Not that one";
+            setBanner("bad", "Wrong pad — watch for the right note");
+            progressNote.textContent = "That was " + PAD_NAMES[extra] + ", but Simon expected " + PAD_NAMES[sequence[playerIndex]] + ". " + lives + (lives === 1 ? " life" : " lives") + " left — Simon will replay just that missed note, slowly.";
+            progressBar.style.width = "0%";
+          } else if (state === "over") {
+            lamp.classList.add("over"); lampText.textContent = "Game over"; hubStatus.textContent = "Game over";
+            setBanner("bad", "Game over");
+            progressNote.textContent = "That was " + PAD_NAMES[extra] + ", but Simon expected " + PAD_NAMES[sequence[playerIndex]] + ". Press Play again for a fresh tune.";
+            progressBar.style.width = "0%";
+          } else if (state === "won") {
+            lamp.classList.add("done"); lampText.textContent = "Simon beaten"; hubStatus.textContent = "You beat Simon!";
+            setBanner("yours", "You beat Simon!");
+            progressNote.textContent = "Round " + WIN_ROUND + " cleared — the full tune, note perfect.";
+            progressBar.style.width = "100%";
+          } else {
+            lampText.textContent = "Press New game"; hubStatus.textContent = "Ready";
+            setBanner("", "Press New Game to start");
+            progressNote.textContent = "Press New game and Simon will play the first note.";
+            progressBar.style.width = "0%";
+          }
+
+          seqDots.innerHTML = "";
+          for (var d = 0; d < round; d++) {
+            var dot = document.createElement("i");
+            if (phase === "input" || phase === "between") {
+              if (d < playerIndex || state === "roundclear" || state === "won") dot.className = "got";
+              else if (d === playerIndex && phase === "input") dot.className = "now";
+            } else if (state === "showing") { if (typeof extra === "number" && d < extra) dot.className = "got"; }
+            seqDots.appendChild(dot);
+          }
+          watchBtn.disabled = phase !== "input";
+          restartBtn.disabled = phase === "idle";
+        }
+
+        padEls.forEach(function (el) { el.addEventListener("click", function () { pressPad(parseInt(el.getAttribute("data-pad"), 10)); }); });
+        document.addEventListener("keydown", function (e) {
+          if (e.repeat || phase !== "input") return;
+          var map = { "1": 0, "2": 1, "3": 2, "4": 3, "q": 0, "w": 1, "a": 2, "s": 3 };
+          var key = (e.key || "").toLowerCase();
+          if (Object.prototype.hasOwnProperty.call(map, key)) { e.preventDefault(); pressPad(map[key]); }
+        });
+        document.getElementById("newGameBtn").addEventListener("click", function () { ensureAudio(); newGame(); });
+        document.getElementById("againBtn").addEventListener("click", function () { ensureAudio(); newGame(); });
+        restartBtn.addEventListener("click", function () { ensureAudio(); restartGame(); });
+        watchBtn.addEventListener("click", watchAgain);
+
+        var soundBtn = document.getElementById("soundBtn");
+        soundBtn.addEventListener("click", function () {
+          soundOn = !soundOn;
+          soundBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+          document.getElementById("soundLabel").textContent = soundOn ? "Sound on" : "Sound off";
+          if (soundOn) padTone(0, 200);
+        });
+
+        var cbBtn = document.getElementById("cbBtn");
+        cbBtn.addEventListener("click", function () {
+          var on = !padsEl.classList.contains("show-labels");
+          padsEl.classList.toggle("show-labels", on);
+          cbBtn.setAttribute("aria-pressed", on ? "true" : "false");
+          cbBtn.textContent = on ? "Labels & patterns: On" : "Labels & patterns: Off";
+        });
+
+        var modeSeg = document.getElementById("modeSeg");
+        modeSeg.addEventListener("click", function (e) {
+          var btn = e.target.closest("button[data-mode]"); if (!btn) return;
+          var newStrict = btn.getAttribute("data-mode") === "strict";
+          if (newStrict === strict) return;
+          strict = newStrict;
+          Array.prototype.forEach.call(modeSeg.children, function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+          if (phase !== "idle" && phase !== "over" && phase !== "won") newGame();
+          else { lives = strict ? 1 : 3; render(phase === "over" ? "over" : phase === "won" ? "won" : "idle"); }
+        });
+
+        var speedSeg = document.getElementById("speedSeg");
+        speedSeg.addEventListener("click", function (e) {
+          var btn = e.target.closest("button[data-speed]"); if (!btn) return;
+          speed = btn.getAttribute("data-speed");
+          Array.prototype.forEach.call(speedSeg.children, function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+        });
+
+        document.getElementById("statsBtn").addEventListener("click", openStats);
+        document.getElementById("statsClose").addEventListener("click", closeStats);
+        document.getElementById("statsDoneBtn").addEventListener("click", closeStats);
+        document.getElementById("statsPlayBtn").addEventListener("click", function () { closeStats(); ensureAudio(); newGame(); });
+        document.getElementById("statsOverlay").addEventListener("click", function (e) { if (e.target === this) closeStats(); });
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeStats(); });
+
+        renderStatsModal();
+        render("idle");
+      })();
+    </script>
+  </body>
+</html>
