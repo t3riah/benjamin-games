@@ -59,22 +59,36 @@
       }
 
       * { box-sizing: border-box; }
-      html { -webkit-text-size-adjust: 100%; }
+      html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
       body {
         margin: 0;
         font-family: "Libre Franklin", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
         color: var(--ink);
         background: var(--bg);
         min-height: 100vh;
+        min-height: 100dvh;
+        touch-action: manipulation;
+        overflow-x: clip;
       }
-      .wrap { max-width: 520px; margin: 0 auto; padding: 0 16px 48px; }
+      /* Any form field keeps 16px text so iOS never auto-zooms on focus */
+      input, select, textarea { font-size: 16px; }
+      button { touch-action: manipulation; }
+      .wrap {
+        --pad: 16px;
+        /* Board width: full column, but capped so the board + compact chrome
+           fit the phone's height and the board stays above the fold */
+        --board-w: min(420px, calc(100vh - 300px));
+        --board-w: min(420px, calc(100dvh - 300px));
+        max-width: 520px; margin: 0 auto;
+        padding: 0 max(var(--pad), env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(var(--pad), env(safe-area-inset-left));
+      }
 
       /* ---------- Masthead (NYT Wordle style) ---------- */
       .masthead {
         border-bottom: 1px solid var(--line);
-        margin: 0 -16px;
-        padding: 10px 16px 9px;
-        display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+        margin: 0 calc(-1 * max(var(--pad), env(safe-area-inset-right))) 0 calc(-1 * max(var(--pad), env(safe-area-inset-left)));
+        padding: calc(10px + env(safe-area-inset-top)) max(var(--pad), env(safe-area-inset-right)) 9px max(var(--pad), env(safe-area-inset-left));
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
       }
       .masthead .brand {
         font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
@@ -106,8 +120,11 @@
         background: var(--key); color: var(--ink);
         font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
         padding: 10px 13px; border-radius: 4px; line-height: 1;
+        min-height: 44px; min-width: 44px;
+        display: inline-flex; align-items: center; justify-content: center;
         transition: background 0.12s ease;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       .seg button:hover, .btn:hover { background: var(--key-hover); }
       .seg button[aria-pressed="true"] { background: var(--gray-dark); color: #fff; }
@@ -140,7 +157,7 @@
       /* ---------- Board: flat Wordle tiles ---------- */
       .board-top {
         display: flex; justify-content: space-between; align-items: center;
-        max-width: 420px; margin: 0 auto 8px;
+        max-width: var(--board-w); margin: 0 auto 8px;
         font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
         color: var(--ink-faint); font-weight: 700;
       }
@@ -149,7 +166,7 @@
       .lamp.done i { background: var(--green); border-color: var(--green); border-radius: 50%; }
       .board {
         display: grid; gap: 5px;
-        max-width: 420px; margin: 0 auto; width: 100%;
+        max-width: var(--board-w); margin: 0 auto; width: 100%;
       }
       .cell {
         appearance: none; cursor: pointer; padding: 4px 2px;
@@ -168,7 +185,7 @@
         border: 3px solid var(--gray); background: transparent;
       }
       .cell .word {
-        font-size: clamp(8px, 2.4vw, 11px); font-weight: 800;
+        font-size: clamp(9px, 2.4vw, 11px); font-weight: 800;
         letter-spacing: 0.14em; text-transform: uppercase; line-height: 1;
       }
       /* ON state: yellow fill + hatched texture + filled disc — not colour alone */
@@ -202,7 +219,7 @@
       /* Legend: shape + texture key */
       .legend {
         display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center;
-        max-width: 420px; margin: 12px auto 0;
+        max-width: var(--board-w); margin: 12px auto 0;
         font-size: 12px; font-weight: 600; color: var(--ink-soft);
       }
       .legend .item { display: inline-flex; align-items: center; gap: 7px; }
@@ -215,7 +232,7 @@
 
       /* Preview / hint panels */
       .notice {
-        display: none; max-width: 420px; margin: 14px auto 0;
+        display: none; max-width: var(--board-w); margin: 14px auto 0;
         border: 1px solid var(--line); background: var(--panel);
         padding: 12px 14px; font-size: 14px; line-height: 1.55; color: var(--ink-soft);
       }
@@ -226,15 +243,15 @@
       #hintBox { background: var(--hint-bg); border-color: var(--hint-edge); }
       #previewBar { border-color: var(--green); }
 
-      .progress { height: 6px; background: var(--line); max-width: 420px; margin: 16px auto 0; }
+      .progress { height: 6px; background: var(--line); max-width: var(--board-w); margin: 16px auto 0; }
       .progress i { display: block; height: 100%; width: 0%; background: var(--green); transition: width 0.25s ease; }
-      .progress-note { text-align: center; color: var(--ink-soft); font-size: 13.5px; margin: 8px auto 0; min-height: 1.3em; max-width: 420px; }
+      .progress-note { text-align: center; color: var(--ink-soft); font-size: 13.5px; margin: 8px auto 0; min-height: 1.3em; max-width: var(--board-w); }
 
       .under { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 14px; }
 
       /* ---------- Win banner ---------- */
       .win {
-        display: none; margin: 18px auto 0; max-width: 420px;
+        display: none; margin: 18px auto 0; max-width: var(--board-w);
         background: var(--good-bg); border: 1px solid var(--green);
         padding: 18px 20px; text-align: center;
       }
@@ -259,7 +276,10 @@
       .icon-btn {
         appearance: none; background: none; border: 0; cursor: pointer;
         color: var(--ink); padding: 6px; line-height: 0; border-radius: 4px;
+        min-width: 44px; min-height: 44px;
+        display: inline-flex; align-items: center; justify-content: center;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       .icon-btn:hover { color: var(--green-dark); }
       .icon-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
@@ -270,7 +290,8 @@
         display: none; position: fixed; inset: 0; z-index: 60;
         background: rgba(0, 0, 0, 0.45);
         align-items: flex-start; justify-content: center;
-        padding: 24px 12px; overflow-y: auto;
+        padding: calc(24px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        overflow-y: auto;
       }
       .overlay.show { display: flex; }
       .modal {
@@ -283,10 +304,13 @@
       }
       @keyframes modalIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
       .modal-close {
-        position: absolute; top: 6px; right: 6px;
+        position: absolute; top: 2px; right: 2px;
         appearance: none; background: none; border: 0; cursor: pointer;
-        color: var(--ink-soft); padding: 8px; line-height: 0; border-radius: 4px;
+        color: var(--ink-soft); line-height: 0; border-radius: 4px;
+        width: 44px; height: 44px;
+        display: flex; align-items: center; justify-content: center;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
       }
       .modal-close:hover { color: var(--ink); }
       .modal-close:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
@@ -348,7 +372,7 @@
 
       /* ---------- Badge unlock toast ---------- */
       .toasts {
-        position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+        position: fixed; top: calc(14px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
         z-index: 80; width: min(92vw, 380px);
         display: flex; flex-direction: column; gap: 8px; align-items: stretch;
         pointer-events: none;
@@ -382,6 +406,43 @@
         .seg button, .btn { padding: 9px 10px; font-size: 12px; }
         .masthead .brand, .masthead .puzzle-no { letter-spacing: 0.1em; font-size: 9px; }
       }
+      /* ---------- Phones (portrait first): compact chrome, board above the fold ---------- */
+      @media (max-width: 480px) {
+        .wrap {
+          --pad: 10px;
+          /* Tighter height reserve on phones: ~220px of compact header,
+             controls and stats above the board, the rest is board */
+          --board-w: min(420px, calc(100vh - 262px));
+          --board-w: min(420px, calc(100dvh - 262px));
+        }
+        .masthead { padding-top: calc(4px + env(safe-area-inset-top)); padding-bottom: 5px; }
+        h1 { font-size: 23px; }
+        .tagline { font-size: 13px; line-height: 1.45; margin: 8px auto 0; }
+        .controls { margin: 10px 0 2px; gap: 6px; }
+        .seg { gap: 4px; }
+        .seg button, .btn { padding: 0 11px; font-size: 12.5px; }
+        .stats { padding: 7px 0 6px; margin-bottom: 10px; }
+        .stat .v { font-size: 20px; }
+        .board { gap: 4px; }
+        .board-top { margin-bottom: 6px; }
+        .legend { margin-top: 10px; font-size: 11.5px; gap: 6px 12px; }
+        .notice { margin-top: 10px; padding: 10px 12px; font-size: 13.5px; }
+        .progress { margin-top: 12px; }
+        .under { margin-top: 10px; gap: 5px; }
+        .win { margin-top: 12px; padding: 14px; }
+        .win h2 { font-size: 22px; }
+        .howto { margin-top: 22px; padding-top: 14px; }
+        footer { margin-top: 20px; }
+        /* Lighter motion on phones: the hint keeps its solid green border, no pulse */
+        .cell.hint { animation: none; box-shadow: inset 0 0 0 3px var(--green); }
+        .modal { animation: none; padding: 24px 16px 16px; }
+        .toast { transition-duration: 0.15s; }
+      }
+      /* Short landscape phones: drop the tagline so the board keeps the screen */
+      @media (max-width: 900px) and (max-height: 500px) {
+        .tagline { display: none; }
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .cell, .progress i, .btn, .seg button { transition: none; }
         .cell.hint { animation: none; }
@@ -940,7 +1001,9 @@
           if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
           var box = document.getElementById("confetti"); box.innerHTML = "";
           var colors = ["#538d4e", "#c9b458", "#787c7e", "#1a1a1b", "#d3d6da"];
-          for (var i = 0; i < 42; i++) {
+          /* Win celebration stays, with fewer pieces on phones */
+          var pieces = window.matchMedia("(max-width: 480px)").matches ? 20 : 42;
+          for (var i = 0; i < pieces; i++) {
             var s = document.createElement("span"), sz = 6 + Math.random() * 7;
             s.style.left = (Math.random() * 100) + "vw";
             s.style.width = sz + "px"; s.style.height = (sz * (0.5 + Math.random() * 0.9)) + "px";
