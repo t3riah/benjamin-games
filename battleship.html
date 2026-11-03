@@ -33,6 +33,13 @@
         --toast-bg: #1a1a1b;
         --toast-ink: #ffffff;
         --seg-bg: #f4f4f4;
+        --sea-hi: #3d9bd6;
+        --sea-mid: #1d74b0;
+        --sea-deep: #0f568f;
+        --hull-hi: #8fa8bd;
+        --hull-mid: #5f7a92;
+        --hull-deep: #42596e;
+        --hull-edge: #24384d;
         color-scheme: light;
       }
       /* Brand shell is cream on purpose, in every color scheme, so the
@@ -238,25 +245,29 @@
         touch-action: none; user-select: none; -webkit-user-select: none;
       }
       .ship-chip:active { cursor: grabbing; }
-      .ship-chip .pips { display: inline-flex; gap: 3px; }
-      .ship-chip .pips i {
-        width: 13px; height: 9px; border-radius: 2px;
-        border: 1.5px solid var(--gray); display: inline-block;
-      }
+      .ship-chip .mini-hull { display: inline-flex; align-items: center; }
+      .ship-chip .mini-hull svg { height: 14px; width: auto; display: block; }
       .ship-chip.selected { border-color: var(--ink); background: var(--ink); color: var(--bg); }
-      .ship-chip.selected .pips i { border-color: var(--bg); }
       .ship-chip.placed { opacity: 0.6; }
-      .ship-chip.placed .pips i { background: var(--green); border-color: var(--green); }
       .ship-chip.selected.placed { opacity: 1; }
       .tray-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
-      /* ---------- Boards: flat Wordle tiles ---------- */
+      /* ---------- Boards: ocean, hulls, bursts ---------- */
       .boards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
       .board-frame {
-        background: var(--panel);
-        border: 1px solid var(--panel-edge);
+        background: linear-gradient(180deg, #eaf3f8, #d6e8f2);
+        border: 2px solid var(--navy);
         border-radius: 16px;
         padding: clamp(12px, 3vw, 20px);
+        box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.6), 0 6px 18px rgba(30, 58, 95, 0.18);
+      }
+      .board-frame.shake { animation: boardShake 0.45s ease-out; }
+      @keyframes boardShake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-4px); }
+        40% { transform: translateX(4px); }
+        60% { transform: translateX(-3px); }
+        80% { transform: translateX(3px); }
       }
       .board-top {
         display: flex; justify-content: space-between; align-items: center;
@@ -282,53 +293,127 @@
         color: var(--ink-faint); font-size: 10px; align-items: center;
         text-align: center; font-weight: 700;
       }
-      .board { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
+      .board { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; background: #0d3a5f; padding: 2px; border-radius: 6px; }
       .cell {
         appearance: none; padding: 0; margin: 0;
         aspect-ratio: 1 / 1; border-radius: 3px;
-        border: 2px solid var(--tile-edge);
-        background: var(--tile);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        background: linear-gradient(155deg, var(--sea-hi) 0%, var(--sea-mid) 48%, var(--sea-deep) 100%);
+        background-size: 180% 180%;
         position: relative; cursor: default;
         font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", sans-serif; font-weight: 700;
-        font-size: clamp(10px, 2.4vw, 15px); color: var(--ink);
+        font-size: clamp(10px, 2.4vw, 15px); color: #fff;
         display: flex; align-items: center; justify-content: center;
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
+        animation: waterShift 9s ease-in-out infinite alternate;
+        overflow: hidden;
+      }
+      .cell:nth-child(3n) { animation-delay: -3s; }
+      .cell:nth-child(5n) { animation-delay: -6s; }
+      @keyframes waterShift { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+      .cell::before {
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.28), transparent 45%),
+          repeating-linear-gradient(115deg, transparent 0 6px, rgba(255, 255, 255, 0.06) 6px 7px);
+        opacity: 0.5;
       }
       body[data-phase="placement"] #playerBoard,
       body[data-phase="placement"] #playerBoard .cell { touch-action: none; }
       .board { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
       .cell.clickable { cursor: pointer; }
-      .cell.clickable:hover { border-color: var(--gray); background: var(--miss-bg); }
-      .cell.ship { background: var(--gray); border-color: var(--gray); color: #fff; }
-      .cell.miss { background: var(--miss-bg); border-color: var(--tile-edge); cursor: default; }
-      .cell.miss::after {
-        content: ""; width: 30%; height: 30%; border-radius: 50%;
-        background: var(--miss-dot);
+      .cell.clickable:hover { border-color: #ffffff; filter: brightness(1.15); }
+      /* Hull: the .ship class is only a JS hook now. Its look is the steel
+         hull below, never a flat gray square. */
+      .cell.ship, .cell.hull {
+        background: linear-gradient(180deg, var(--hull-hi), var(--hull-mid) 45%, var(--hull-deep));
+        border: 2px solid var(--hull-edge); color: #fff; border-radius: 0;
+        box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+        animation: none;
       }
-      .cell.hit { background: var(--green); border-color: var(--green); color: #fff; }
-      .cell.sunk { background: var(--sunk-bg); border-color: var(--sunk-bg); color: #fff; }
+      .cell.hull::before {
+        background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.7) 1.2px, transparent 2px),
+          radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.7) 1.2px, transparent 2px);
+        opacity: 0.8;
+      }
+      .cell.hull-turret::after {
+        content: ""; position: absolute; width: 38%; height: 38%; left: 31%; top: 31%;
+        border-radius: 50%; pointer-events: none;
+        background: radial-gradient(circle, #dbe7f0 0 30%, #4a6076 31% 100%);
+        border: 1px solid var(--hull-edge);
+      }
+      .cell.hull-h.hull-stern { border-radius: 6px 0 0 6px; border-right-width: 0; }
+      .cell.hull-h.hull-mid { border-left-width: 0; border-right-width: 0; }
+      .cell.hull-h.hull-bow { border-radius: 0 50% 50% 0; border-left-width: 0; }
+      .cell.hull-v.hull-stern { border-radius: 6px 6px 0 0; border-bottom-width: 0; }
+      .cell.hull-v.hull-mid { border-top-width: 0; border-bottom-width: 0; }
+      .cell.hull-v.hull-bow { border-radius: 0 0 50% 50%; border-top-width: 0; }
+      .cell.miss { background: linear-gradient(155deg, #2a7fb8, #145a8c); border-color: rgba(255, 255, 255, 0.28); cursor: default; }
+      .cell.miss::after {
+        content: ""; width: 34%; height: 34%; border-radius: 50%; position: relative;
+        background: radial-gradient(circle, #ffffff 0 35%, #bfe3f5 36% 70%, transparent 71%);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
+      }
+      .cell.hit {
+        background: radial-gradient(circle at 50% 40%, #ffdd66 0%, #ff7a1a 45%, #b32020 78%);
+        border-color: #7a1408; color: #fff200;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      }
+      .cell.hull.hit {
+        background: radial-gradient(circle at 50% 35%, rgba(255, 120, 20, 0.9), transparent 62%),
+          linear-gradient(180deg, var(--hull-hi), var(--hull-mid) 45%, var(--hull-deep));
+      }
+      .cell.sunk, .cell.hull.sunk {
+        background: linear-gradient(180deg, #3a3f45, #1d2227);
+        border-color: #0c0e10; color: #c8d2dc;
+        filter: saturate(0.4) brightness(0.7);
+        animation: sinkIn 0.8s ease forwards;
+      }
+      .cell.sunk::before {
+        background: radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.7) 2px, transparent 3px),
+          radial-gradient(circle at 75% 25%, rgba(255, 255, 255, 0.55) 2px, transparent 3px);
+        opacity: 0.9;
+      }
+      @keyframes sinkIn { from { transform: translateY(-2px); opacity: 1; } to { transform: translateY(1px) rotate(-2deg); opacity: 0.85; } }
       .cell.covered { opacity: 0.45; }
+      .cell.preview-ok, .cell.preview-bad {
+        border: 2px solid; animation: none;
+      }
       .cell.preview-ok {
-        background: var(--green) !important; border-color: var(--green) !important; color: #fff;
+        background: linear-gradient(180deg, #7fb98a, #3e8a52 55%, #2c6b3e);
+        border-color: #2c6b3e; color: #fff;
       }
       .cell.preview-bad {
-        background: var(--red) !important; border-color: var(--red) !important; color: #fff;
+        background: linear-gradient(180deg, #e88a7a, #cf3527 55%, #9e2418);
+        border-color: #9e2418; color: #fff;
       }
+      .cell.preview-h.preview-stern { border-radius: 6px 0 0 6px; border-right-width: 0; }
+      .cell.preview-h.preview-mid { border-left-width: 0; border-right-width: 0; }
+      .cell.preview-h.preview-bow { border-radius: 0 50% 50% 0; border-left-width: 0; }
+      .cell.preview-v.preview-stern { border-radius: 6px 6px 0 0; border-bottom-width: 0; }
+      .cell.preview-v.preview-mid { border-top-width: 0; border-bottom-width: 0; }
+      .cell.preview-v.preview-bow { border-radius: 0 0 50% 50%; border-top-width: 0; }
       .cell.targeted {
         border-color: var(--yellow); background: var(--target-bg);
         box-shadow: 0 0 0 3px var(--yellow);
       }
       .cell.just-fired { animation: firedPulse 0.35s ease-out; }
       @keyframes firedPulse { 0% { transform: scale(1.18); } 100% { transform: scale(1); } }
-      .cell.just-fired.hit, .cell.just-fired.sunk { animation: hitPulse 0.35s ease-out; }
-      @keyframes hitPulse { 0% { transform: scale(1.22); box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.55); } 100% { transform: scale(1); box-shadow: none; } }
-      .cell.just-fired.miss { animation: missPulse 0.35s ease-out; }
-      @keyframes missPulse { 0% { transform: scale(0.88); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
-      .cell.sonar { animation: sonarPulse 0.9s ease-in-out infinite; }
-      @keyframes sonarPulse {
-        0%, 100% { box-shadow: 0 0 0 3px var(--yellow); }
-        50% { box-shadow: 0 0 0 1px var(--yellow); }
+      .cell.just-fired.hit { animation: boomBurst 0.6s ease-out; }
+      @keyframes boomBurst {
+        0% { transform: scale(1.25); box-shadow: 0 0 0 0 rgba(255, 122, 26, 0.9), 0 0 18px 6px rgba(255, 122, 26, 0.8); }
+        100% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 122, 26, 0), 0 0 0 0 rgba(255, 122, 26, 0); }
+      }
+      .cell.just-fired.sunk { animation: boomBurst 0.6s ease-out, sinkIn 0.8s ease 0.2s forwards; }
+      .cell.just-fired.miss { animation: splashBurst 0.6s ease-out; }
+      @keyframes splashBurst {
+        0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.9), 0 0 0 0 rgba(191, 227, 245, 0.8); }
+        100% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 255, 255, 0), 0 0 0 16px rgba(191, 227, 245, 0); }
+      }
+      .cell.sonar { animation: sonarRings 1.2s ease-out infinite; }
+      @keyframes sonarRings {
+        0% { box-shadow: 0 0 0 0 rgba(201, 180, 88, 0.9), 0 0 0 0 rgba(255, 255, 255, 0.6); }
+        100% { box-shadow: 0 0 0 12px rgba(201, 180, 88, 0), 0 0 0 18px rgba(255, 255, 255, 0); }
       }
       .cell:disabled { cursor: default; }
 
@@ -351,13 +436,9 @@
       }
       .fleet-card li:last-child { border-bottom: 0; }
       .fleet-card li .nm { font-weight: 700; color: var(--ink); white-space: nowrap; }
-      .fleet-card li .segs { display: inline-flex; gap: 3px; margin-right: auto; }
-      .fleet-card li .segs i {
-        width: 15px; height: 10px; border-radius: 2px;
-        border: 1.5px solid var(--gray); display: inline-block;
-      }
-      .fleet-card li .segs i.hitseg { background: var(--green); border-color: var(--green); }
-      .fleet-card li .segs i.sunkseg { background: var(--sunk-bg); border-color: var(--sunk-bg); }
+      .fleet-card li .segs { display: inline-flex; margin-right: auto; align-items: center; }
+      .fleet-card li .segs svg { height: 16px; width: auto; display: block; }
+      .fleet-card li.is-sunk .segs svg { filter: saturate(0.3) brightness(0.75); }
       .fleet-card li .st {
         font-size: 11px; font-weight: 700; white-space: nowrap;
         letter-spacing: 0.08em; text-transform: uppercase;
@@ -385,7 +466,22 @@
       }
 
       /* ---------- End banner ---------- */
-      .endbox { display: none; margin-top: 18px; border-radius: 16px; padding: 18px 20px; text-align: center; }
+      .endbox { display: none; margin-top: 18px; border-radius: 16px; padding: 18px 20px; text-align: center; position: relative; overflow: hidden; }
+      .endbox h2, .endbox p, .endbox .btn { position: relative; z-index: 1; }
+      .endbox.show::before {
+        content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; pointer-events: none;
+        background: radial-gradient(circle at 20px -8px, transparent 18px, rgba(30, 58, 95, 0.20) 19px) repeat-x;
+        background-size: 40px 26px; animation: waveSlide 4s linear infinite;
+      }
+      @keyframes waveSlide { from { background-position-x: 0; } to { background-position-x: 40px; } }
+      .endbox.won.show::after {
+        content: ""; position: absolute; top: 10px; right: 14px; width: 46px; height: 30px; pointer-events: none;
+        background: linear-gradient(90deg, #ffffff 0 33%, var(--navy) 33% 66%, var(--red) 66% 100%);
+        clip-path: polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%);
+        animation: flagWave 1.2s ease-in-out infinite alternate;
+        transform-origin: left center;
+      }
+      @keyframes flagWave { from { transform: skewY(-3deg) scaleX(0.96); } to { transform: skewY(3deg) scaleX(1); } }
       .endbox.show { display: block; }
       .endbox.won { background: var(--good-bg); border: 1.5px solid var(--green); }
       .endbox.lost { background: var(--bad-bg); border: 1.5px solid var(--bad); }
@@ -645,7 +741,6 @@
         .tray p { font-size: 13px; line-height: 1.45; margin-bottom: 10px; }
         .fleet-chips { gap: 6px; margin-bottom: 10px; }
         .ship-chip { padding: 7px 10px; font-size: 11.5px; }
-        .ship-chip .pips i { width: 11px; height: 8px; }
         .fleet-card { padding: 11px 13px; }
         .howto { padding: 16px; }
       }
@@ -662,8 +757,10 @@
       }
       @media (prefers-reduced-motion: reduce) {
         .progress i, .btn { transition: none; }
-        .cell.sonar { animation: none; box-shadow: 0 0 0 3px var(--yellow); }
-        .cell.just-fired { animation: none; }
+        .cell, .cell.sonar, .cell.just-fired { animation: none; }
+        .cell.sonar { box-shadow: 0 0 0 3px var(--yellow); }
+        .board-frame.shake { animation: none; }
+        .endbox.show::before, .endbox.won.show::after { animation: none; }
         .confetti { display: none; }
       }
           #modePanel h3 { margin: 18px 0 8px; font-size: 15px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
@@ -755,7 +852,7 @@
 
       <section class="tray" id="tray">
         <h2>Place your fleet</h2>
-        <p>Drag a ship from here onto <strong>Your Fleet</strong> — it snaps to the grid and turns <strong>red</strong> where it won&rsquo;t fit. Or tap a ship, then tap squares to set it down, and drag placed ships to move them.</p>
+        <p>Drag a ship from here onto <strong>Your Fleet</strong> — it snaps to the grid and shows as a <strong>red hull</strong> where it won&rsquo;t fit. Or tap a ship, then tap squares to set it down, and drag placed ships to move them.</p>
         <div class="fleet-chips" id="fleetChips"></div>
         <div class="tray-actions">
           <button class="btn random" id="autoBtn" type="button">
@@ -799,7 +896,7 @@
 
       <div class="fleet-status">
         <div class="fleet-card"><h3>Your fleet</h3><ul id="playerFleetList"></ul></div>
-        <div class="fleet-card"><h3>Enemy fleet</h3><p class="fleet-note">Ship silhouettes — segments fill in green as your shots land, black when sunk.</p><ul id="enemyFleetList"></ul></div>
+        <div class="fleet-card"><h3>Enemy fleet</h3><p class="fleet-note">Ship silhouettes — your fleet shows damage segment by segment; the enemy fleet shows only Afloat or Sunk.</p><ul id="enemyFleetList"></ul></div>
       </div>
 
       <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
@@ -813,7 +910,7 @@
           <button class="btn" id="quitBtn" type="button" hidden>Quit battle</button>
       </div>
 
-      <section class="endbox id="endBox" aria-live="polite">
+      <section class="endbox" id="endBox" aria-live="polite">
         <h2 id="endTitle"></h2>
         <p id="endText"></p>
         <button class="btn" id="againBtn" type="button">Play another battle</button>
@@ -823,12 +920,12 @@
         <h2>How to play</h2>
         <ol>
           <li><strong>Place your five ships.</strong> Carrier (5), Battleship (4), Cruiser (3), Submarine (3), and Destroyer (2). Drag a ship onto your board — it snaps to the grid and turns red where it won&rsquo;t fit — or tap a ship, then tap squares. <strong>Random fleet</strong> places them all at once. In Training, the fleet preset changes the ships, and the preset shown above the board is the one in play.</li>
-          <li><strong>Press Start battle</strong>, then tap any square in Enemy Waters to fire. Green is a hit, a pale square with a dot is a miss, and black means that ship is sunk.</li>
-          <li><strong>Watch the enemy silhouettes.</strong> In the Enemy Fleet panel, each ship&rsquo;s segments fill in green as you hit it, so you can see at a glance how close you are to sinking it.</li>
+          <li><strong>Press Start battle</strong>, then tap any square in Enemy Waters to fire. A burning burst is a hit, a splash ripple is a miss, and a dark wrecked hull means that ship is sunk.</li>
+          <li><strong>Watch the enemy fleet panel.</strong> A ship there shows Sunk only when you sink it, so you cannot see its damage before then.</li>
           <li><strong>Optional:</strong> turn on <strong>Confirm fire</strong> and a first tap locks the target — tap the square again (or the Fire button) to shoot, so a stray tap never wastes a shot. The last shot stays pinned at the top, with the full battle log just below it.</li>
         </ol>
         <p class="tip"><strong>2 Players:</strong> pass the device between turns. On your turn you only see your own fleet and your own shots, never the other player&rsquo;s unhit ships.</p>
-        <p class="tip"><strong>Captain&rsquo;s tips:</strong> ships can&rsquo;t bend, so once you score a hit, work the squares around it in a line. Stuck? A sonar ping (two per battle) outlines one square in yellow that definitely holds an enemy ship. On Smart, the computer hunts the same way — spread your ships out.</p>
+        <p class="tip"><strong>Captain&rsquo;s tips:</strong> ships can&rsquo;t bend, so once you score a hit, work the squares around it in a line. Stuck? A sonar ping (two per battle) shows expanding sonar rings over one square that definitely holds an enemy ship. On Smart, the computer hunts the same way — spread your ships out.</p>
       </section>
 
       <footer>Saved on your device only. No accounts, no ads.</footer>
@@ -863,7 +960,7 @@
       </div>
     </div>
 
-    <div class="toast-wrap id="toastWrap" aria-live="polite"></div>
+    <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
 
     <div id="dragGhost" aria-hidden="true"></div>
     <div class="confetti" id="confetti" aria-hidden="true"></div>
@@ -1440,21 +1537,56 @@
           }
         }
 
+        /* ---------------- Hull / silhouette helpers (visual only) ---------------- */
+        function hullInfo(ship, idx) {
+          var cells = ship.cells;
+          var pos = idx === cells[0] ? "stern" : idx === cells[cells.length - 1] ? "bow" : "mid";
+          var orient = cells.length > 1 && cells[1] - cells[0] === 1 ? "h" : "v";
+          return { pos: pos, orient: orient, turret: ship.def.size >= 4 && idx === cells[Math.floor(cells.length / 2)] };
+        }
+        function hullClasses(ship, idx) {
+          var h = hullInfo(ship, idx);
+          return " hull hull-" + h.orient + " hull-" + h.pos + (h.turret ? " hull-turret" : "");
+        }
+        function shipSVG(size, filled, sunk) {
+          var w = size * 18, segW = (w - 6) / size, parts = "";
+          for (var i = 0; i < size; i++) {
+            if (sunk || i < filled) parts += "<rect x=\"" + (3 + i * segW) + "\" y=\"4\" width=\"" + (segW - 2) + "\" height=\"8\" fill=\"" + (sunk ? "#1d2227" : "#e8604c") + "\"/>";
+            if (i > 0) parts += "<line x1=\"" + (3 + i * segW) + "\" y1=\"3\" x2=\"" + (3 + i * segW) + "\" y2=\"13\" stroke=\"#24384d\" stroke-width=\"1\"/>";
+          }
+          return "<svg class=\"ship-svg\" viewBox=\"0 0 " + w + " 16\" width=\"" + w + "\" height=\"16\" aria-hidden=\"true\"><path d=\"M3 2 H" + (w - 12) + " L" + (w - 2) + " 8 L" + (w - 12) + " 14 H3 Q1 8 3 2 Z\" fill=\"" + (sunk ? "#2a2f35" : "#dfe7ee") + "\" stroke=\"#24384d\" stroke-width=\"1.5\"/>" + parts + "</svg>";
+        }
+        function shakeBoard(frameId) {
+          var f = document.getElementById(frameId);
+          if (!f) return;
+          f.classList.add("shake");
+          setTimeout(function () { f.classList.remove("shake"); }, 500);
+        }
+
         /* ---------------- Rendering ---------------- */
         function renderPlayerBoard(preview) {
           var cells = playerBoardEl.children;
           var previewSet = {};
           var previewOk = false;
-          if (preview) { preview.cells.forEach(function (c) { previewSet[c] = true; }); previewOk = preview.ok; }
+          var previewCells = [];
+          if (preview) { preview.cells.forEach(function (c) { previewSet[c] = true; }); previewOk = preview.ok; previewCells = preview.cells; }
           for (var i = 0; i < N * N; i++) {
             var el = cells[i];
             var occ = playerOcc[i];
             var shot = enemyShots[i];
             el.className = "cell";
             el.textContent = "";
-            if (previewSet[i]) el.classList.add(previewOk ? "preview-ok" : "preview-bad");
+            if (previewSet[i]) {
+              var pi = previewCells.indexOf(i);
+              var pPos = pi === 0 ? "stern" : pi === previewCells.length - 1 ? "bow" : "mid";
+              var pOrient = previewCells.length > 1 && previewCells[1] - previewCells[0] === 1 ? "h" : "v";
+              el.classList.add(previewOk ? "preview-ok" : "preview-bad", "preview-" + pOrient, "preview-" + pPos);
+            }
             if (occ) {
               var ship = playerShips[occ];
+              ship.def = ship.def || fleetDefs.filter(function (s) { return s.id === occ; })[0];
+              var hc = hullClasses(ship, i);
+              hc.split(" ").forEach(function (c) { if (c) el.classList.add(c); });
               if (shipSunk(ship)) { el.classList.add("sunk"); el.textContent = "✕"; }
               else if (shot === "hit") { el.classList.add("hit"); el.textContent = "✕"; }
               else el.classList.add("ship");
@@ -1483,9 +1615,13 @@
             if (phase === "placement") {
               el.classList.add("covered");
             } else if (shot === "hit") {
-              if (occ && shipSunk(enemyShips[occ])) { el.classList.add("sunk"); }
-              else el.classList.add("hit");
-              el.textContent = "✕";
+              if (occ && shipSunk(enemyShips[occ])) {
+                // Sunk ships are revealed as wrecked hulls; unsunk hits stay
+                // as burst marks only, so no live ship shape is ever shown.
+                enemyShips[occ].def = enemyShips[occ].def || fleetDefs.filter(function (s) { return s.id === occ; })[0];
+                hullClasses(enemyShips[occ], i).split(" ").forEach(function (c) { if (c) el.classList.add(c); });
+                el.classList.add("sunk");
+              } else { el.classList.add("hit"); el.textContent = "✕"; }
             } else if (shot === "miss") {
               el.classList.add("miss");
             }
@@ -1514,9 +1650,7 @@
             chip.className = "ship-chip" +
               (selectedShip === s.id ? " selected" : "") +
               (playerShips[s.id].cells.length === s.size ? " placed" : "");
-            var pips = "";
-            for (var i = 0; i < s.size; i++) pips += "<i></i>";
-            chip.innerHTML = "<span>" + s.name + "</span><span class=\"pips\" aria-hidden=\"true\">" + pips + "</span>";
+            chip.innerHTML = "<span>" + s.name + "</span><span class=\"mini-hull\" aria-hidden=\"true\">" + shipSVG(s.size, 0, false) + "</span>";
             chip.setAttribute("aria-pressed", selectedShip === s.id ? "true" : "false");
             chip.setAttribute("aria-label", s.name + ", " + s.size + " squares" +
               (playerShips[s.id].cells.length === s.size ? ", placed" : ", not placed"));
@@ -1548,13 +1682,9 @@
             else { status = "Afloat"; cls = "afloat"; }
             // Don't leak enemy damage detail beyond sunk: an enemy ship only shows Afloat/Sunk.
             if (isEnemy && placed && !sunk) { status = "Afloat"; cls = "afloat"; }
-            var segs = "";
-            for (var si = 0; si < s.size; si++) {
-              var segCls = "";
-              if (placed && sunk) segCls = "sunkseg";
-              else if (placed && si < hitCount) segCls = "hitseg";
-              segs += "<i class=\"" + segCls + "\"></i>";
-            }
+            // Enemy damage stays hidden: only a sunk enemy ship fills in.
+            var filled = sunk ? s.size : (isEnemy ? 0 : (placed ? hitCount : 0));
+            var segs = shipSVG(s.size, filled, !!sunk);
             li.innerHTML = "<span class=\"nm\">" + s.name + "</span>" +
               "<span class=\"segs\" aria-hidden=\"true\">" + segs + "</span>" +
               "<span class=\"st " + cls + "\">" + status + "</span>";
@@ -1707,6 +1837,7 @@
 
           if (justSunk) {
             sunkSound();
+            shakeBoard("enemyFrame");
             say("You fired at <strong>" + coord(idx) + "</strong> — direct hit, and that sinks their <strong>" +
               justSunk.def.name + "</strong>!", "hit");
             logEvent("You fired at " + coord(idx) + " — hit. Their " + justSunk.def.name + " is sunk.");
@@ -1924,6 +2055,7 @@
 
           if (justSunk) {
             sunkSound();
+            shakeBoard("playerFrame");
             say("The computer fired at <strong>" + coord(idx) + "</strong> and sank your <strong>" +
               justSunk.def.name + "</strong>. Your move.", "hit");
             logEvent("Computer fired at " + coord(idx) + " — your " + justSunk.def.name + " is sunk.");
