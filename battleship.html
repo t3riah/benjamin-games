@@ -261,6 +261,8 @@
         padding: clamp(12px, 3vw, 20px);
         box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.6), 0 6px 18px rgba(30, 58, 95, 0.18);
       }
+      .board-frame { scroll-margin-top: 12px; }
+      .board-frame.framed { box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.6), 0 6px 18px rgba(30, 58, 95, 0.18), 0 0 0 4px var(--navy); }
       .board-frame.shake { animation: boardShake 0.45s ease-out; }
       @keyframes boardShake {
         0%, 100% { transform: translateX(0); }
@@ -1514,7 +1516,7 @@
                   (missionData.completed[mm] ? " done" : "") +
                   (mm > missionData.unlocked ? " locked" : "");
                 b.disabled = mm > missionData.unlocked;
-                b.addEventListener("click", function () { currentMission = mm; clickSound(); newGame(); });
+                b.addEventListener("click", function () { currentMission = mm; clickSound(); newGame(); frameBoard("playerFrame"); });
                 list.appendChild(b);
               })(m);
             }
@@ -2277,6 +2279,18 @@
         }
 
         /* ---------------- Game setup ---------------- */
+        /* Auto-frame a board: scroll it to the top of the viewport and
+           briefly ring it, so a tap on New game lands the player on the
+           board instead of leaving it several screens down the page.
+           Reduced motion gets an instant jump, not a smooth scroll. */
+        function frameBoard(frameId) {
+          var frame = document.getElementById(frameId);
+          if (!frame || frame.offsetParent === null) return;
+          var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          frame.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+          frame.classList.add("framed");
+          setTimeout(function () { frame.classList.remove("framed"); }, 1600);
+        }
         function newGame() {
           phase = "placement";
           document.body.setAttribute("data-phase", "placement");
@@ -2367,7 +2381,7 @@
           say("Battle stations! The enemy fleet is out there somewhere. <strong>Press a square in Enemy Waters to fire your first shot.</strong>", "good");
           logEvent("Battle started — you fire first.");
           renderModePanel();
-          document.getElementById("enemyFrame").scrollIntoView({ block: "nearest", behavior: "smooth" });
+          frameBoard("enemyFrame");
         }
 
         /* ---------------- Wiring ---------------- */
@@ -2375,8 +2389,8 @@
         buildBoard(enemyBoardEl, enemyCellClick, null);
         playerBoardEl.addEventListener("mouseleave", clearPreview);
 
-        document.getElementById("newGameBtn").addEventListener("click", function () { clickSound(); newGame(); });
-        document.getElementById("againBtn").addEventListener("click", function () { newGame(); });
+        document.getElementById("newGameBtn").addEventListener("click", function () { clickSound(); newGame(); frameBoard("playerFrame"); });
+        document.getElementById("againBtn").addEventListener("click", function () { newGame(); frameBoard("playerFrame"); });
         startBtn.addEventListener("click", startBattle);
 
         document.getElementById("rotateBtn").addEventListener("click", function () {
@@ -2614,6 +2628,7 @@
           mode = btn.getAttribute("data-mode");
           clickSound();
           newGame();
+          frameBoard("playerFrame");
         });
         document.getElementById("presetBtns").addEventListener("click", function (e) {
           var btn = e.target.closest ? e.target.closest("button[data-preset]") : null;
@@ -2621,6 +2636,7 @@
           presetId = btn.getAttribute("data-preset");
           clickSound();
           newGame();
+          frameBoard("playerFrame");
         });
         document.getElementById("passBtn").addEventListener("click", function () {
           var kind = two.passKind, forPlayer = two.passFor;
@@ -2636,6 +2652,7 @@
             renderAll();
             renderModePanel();
             say("Player " + forPlayer + ", place your fleet in secret. Drag ships onto <strong>Your Fleet</strong>, or tap a ship then tap squares.");
+            frameBoard("playerFrame");
           } else if (kind === "turn") {
             two.currentPlayer = forPlayer;
             phase = "battle";
@@ -2646,6 +2663,7 @@
             renderAll();
             renderModePanel();
             say("Player " + forPlayer + ", your turn. Tap a square in Enemy Waters to fire.");
+            frameBoard("enemyFrame");
           }
           two.passKind = null; two.passFor = null;
         });
