@@ -666,6 +666,12 @@
         .cell.just-fired { animation: none; }
         .confetti { display: none; }
       }
+          #modePanel h3 { margin: 18px 0 8px; font-size: 15px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+      .mission-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+      .mission-grid .btn { min-height: 52px; }
+      .mission-grid .btn:disabled { opacity: 0.45; }
+      #passOverlay .modal { text-align: center; }
+      #passOverlay .modal p { line-height: 1.6; color: var(--ink-soft); }
     </style>
   </head>
   <body data-phase="placement">
@@ -677,7 +683,7 @@
       <header>
         <div class="screws">A sea battle</div>
         <h1>Benjamin&rsquo;s <span class="amp">Battleship</span></h1>
-        <p class="tagline">Place your fleet on the panel, then trade shots with the computer captain. First side to <strong>sink all five enemy ships</strong> wins the sea.</p>
+        <p class="tagline">Place your fleet on the panel, then trade shots with the computer captain. First side to <strong>sink the whole enemy fleet</strong> wins the sea.</p>
         <button class="icon-btn" id="statsBtn" type="button" aria-label="Open statistics and badges" title="Statistics">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3.5" y="11" width="4.4" height="9" rx="0.8"/><rect x="9.8" y="4" width="4.4" height="16" rx="0.8"/><rect x="16.1" y="8" width="4.4" height="12" rx="0.8"/></svg>
         </button>
@@ -702,6 +708,32 @@
           <span id="confirmLabel">Confirm fire: Off</span>
         </button>
       </div>
+
+      <section class="tray" id="modePanel">
+        <h2>Choose how to play</h2>
+        <div class="tray-actions" id="modeBtns">
+          <button class="btn" type="button" data-mode="one" aria-pressed="true">1 Player: Missions</button>
+          <button class="btn" type="button" data-mode="training" aria-pressed="false">Training</button>
+          <button class="btn" type="button" data-mode="two" aria-pressed="false">2 Players: same device</button>
+        </div>
+        <p id="rankLine"></p>
+        <div id="missionPanel">
+          <h3>Missions</h3>
+          <p id="missionNote">Win a mission to unlock the next one. Missions 1 to 2 use Easy, 3 to 5 use Normal, 6 to 10 use Smart.</p>
+          <div class="mission-grid" id="missionList"></div>
+        </div>
+        <div id="presetPanel">
+          <h3>Training fleet</h3>
+          <div class="tray-actions" id="presetBtns">
+            <button class="btn" type="button" data-preset="classic" aria-pressed="true">Classic</button>
+            <button class="btn" type="button" data-preset="patrol" aria-pressed="false">Patrol</button>
+            <button class="btn" type="button" data-preset="armada" aria-pressed="false">Armada</button>
+          </div>
+          <p id="presetNote"></p>
+          <p>Training is practice: no rank points.</p>
+        </div>
+        <p id="twoNote">2 Players is same-device pass-and-play. Each player places a fleet in secret, then you pass the device between turns. On your turn you only see your own fleet and your own shots.</p>
+      </section>
 
       <div class="stats" aria-label="Game statistics">
         <div class="stat"><div class="v" id="statShots">0</div><div class="k">Your shots</div></div>
@@ -778,9 +810,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><path d="M12 5a7 7 0 0 1 7 7"/><path d="M12 2a10 10 0 0 1 10 10"/><path d="M12 19a7 7 0 0 1-7-7"/><path d="M12 22A10 10 0 0 1 2 12"/></svg>
           <span id="sonarLabel">Sonar ping (2 left)</span>
         </button>
+          <button class="btn" id="quitBtn" type="button" hidden>Quit battle</button>
       </div>
 
-      <section class="endbox" id="endBox" aria-live="polite">
+      <section class="endbox id="endBox" aria-live="polite">
         <h2 id="endTitle"></h2>
         <p id="endText"></p>
         <button class="btn" id="againBtn" type="button">Play another battle</button>
@@ -789,11 +822,12 @@
       <section class="howto">
         <h2>How to play</h2>
         <ol>
-          <li><strong>Place your five ships.</strong> Carrier (5), Battleship (4), Cruiser (3), Submarine (3), and Destroyer (2). Drag a ship onto your board — it snaps to the grid and turns red where it won&rsquo;t fit — or tap a ship, then tap squares. <strong>Random fleet</strong> places them all at once.</li>
+          <li><strong>Place your five ships.</strong> Carrier (5), Battleship (4), Cruiser (3), Submarine (3), and Destroyer (2). Drag a ship onto your board — it snaps to the grid and turns red where it won&rsquo;t fit — or tap a ship, then tap squares. <strong>Random fleet</strong> places them all at once. In Training, the fleet preset changes the ships, and the preset shown above the board is the one in play.</li>
           <li><strong>Press Start battle</strong>, then tap any square in Enemy Waters to fire. Green is a hit, a pale square with a dot is a miss, and black means that ship is sunk.</li>
           <li><strong>Watch the enemy silhouettes.</strong> In the Enemy Fleet panel, each ship&rsquo;s segments fill in green as you hit it, so you can see at a glance how close you are to sinking it.</li>
           <li><strong>Optional:</strong> turn on <strong>Confirm fire</strong> and a first tap locks the target — tap the square again (or the Fire button) to shoot, so a stray tap never wastes a shot. The last shot stays pinned at the top, with the full battle log just below it.</li>
         </ol>
+        <p class="tip"><strong>2 Players:</strong> pass the device between turns. On your turn you only see your own fleet and your own shots, never the other player&rsquo;s unhit ships.</p>
         <p class="tip"><strong>Captain&rsquo;s tips:</strong> ships can&rsquo;t bend, so once you score a hit, work the squares around it in a line. Stuck? A sonar ping (two per battle) outlines one square in yellow that definitely holds an enemy ship. On Smart, the computer hunts the same way — spread your ships out.</p>
       </section>
 
@@ -821,7 +855,15 @@
       </div>
     </div>
 
-    <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+    <div class="modal-overlay" id="passOverlay" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="passTitle">
+        <h2 id="passTitle">Pass the device</h2>
+        <p id="passText"></p>
+        <button class="btn primary" id="passBtn" type="button">Show my boards</button>
+      </div>
+    </div>
+
+    <div class="toast-wrap id="toastWrap" aria-live="polite"></div>
 
     <div id="dragGhost" aria-hidden="true"></div>
     <div class="confetti" id="confetti" aria-hidden="true"></div>
@@ -838,6 +880,100 @@
           { id: "submarine",  name: "Submarine",  size: 3 },
           { id: "destroyer",  name: "Destroyer",  size: 2 }
         ];
+
+        /* ---------------- Fleet presets (original names and sizes) ---------------- */
+        var PRESETS = {
+          classic: { name: "Classic", note: "5 ships: Carrier 5, Battleship 4, Cruiser 3, Submarine 3, Destroyer 2", ships: SHIPS },
+          patrol: { name: "Patrol", note: "4 ships: Frigate 4, Cruiser 3, Destroyer 2, Patrol Boat 2", ships: [
+            { id: "frigate", name: "Frigate", size: 4 },
+            { id: "cruiser", name: "Cruiser", size: 3 },
+            { id: "destroyer", name: "Destroyer", size: 2 },
+            { id: "patrol", name: "Patrol Boat", size: 2 }
+          ] },
+          armada: { name: "Armada", note: "6 ships: Carrier 5, Battleship 4, Heavy Cruiser 4, Cruiser 3, Submarine 3, Destroyer 2", ships: [
+            { id: "carrier", name: "Carrier", size: 5 },
+            { id: "battleship", name: "Battleship", size: 4 },
+            { id: "heavy", name: "Heavy Cruiser", size: 4 },
+            { id: "cruiser", name: "Cruiser", size: 3 },
+            { id: "submarine", name: "Submarine", size: 3 },
+            { id: "destroyer", name: "Destroyer", size: 2 }
+          ] }
+        };
+        var fleetDefs = SHIPS;
+
+        /* ---------------- Modes, missions and rank (saved on this device) ---------------- */
+        var mode = "one"; /* one | training | two */
+        var presetId = "classic";
+        var currentMission = 1;
+        var MISSION_KEY = "benjaminBattleshipMissionsV1";
+        function defaultMissionData() { return { points: 0, unlocked: 1, completed: {} }; }
+        function loadMissionData() {
+          try {
+            var raw = window.localStorage.getItem(MISSION_KEY);
+            if (!raw) return defaultMissionData();
+            var d = JSON.parse(raw), out = defaultMissionData();
+            if (typeof d.points === "number" && d.points >= 0) out.points = Math.floor(d.points);
+            if (typeof d.unlocked === "number" && d.unlocked >= 1 && d.unlocked <= 10) out.unlocked = Math.floor(d.unlocked);
+            if (d.completed && typeof d.completed === "object") out.completed = d.completed;
+            return out;
+          } catch (e) { return defaultMissionData(); }
+        }
+        var missionData = loadMissionData();
+        function saveMissionData() {
+          try { window.localStorage.setItem(MISSION_KEY, JSON.stringify(missionData)); } catch (e) { /* private mode */ }
+        }
+        function rankTitle(points) {
+          if (points >= 200) return "Admiral";
+          if (points >= 100) return "Captain";
+          if (points >= 50) return "Lieutenant";
+          if (points >= 25) return "Petty Officer";
+          if (points >= 10) return "Able Seaman";
+          return "Seaman";
+        }
+        function missionDifficulty(m) { return m <= 2 ? "easy" : m <= 5 ? "normal" : "smart"; }
+        function applyModeSetup() {
+          if (mode === "training") { fleetDefs = PRESETS[presetId].ships; }
+          else { fleetDefs = PRESETS.classic.ships; }
+          if (mode === "one") { difficulty = missionDifficulty(currentMission); }
+        }
+        /* Same-device two-player state. The active board variables always
+           point at the current player's own fleet and shots, so the
+           opponent's unhit ships are never rendered on the wrong turn. */
+        var two = {
+          placementPlayer: 1, currentPlayer: 1,
+          p1Ships: null, p1Occ: null, p2Ships: null, p2Occ: null,
+          p1Shots: null, p2Shots: null,
+          sonar: { 1: 2, 2: 2 }, shots: { 1: 0, 2: 0 }, hits: { 1: 0, 2: 0 },
+          passKind: null, passFor: null
+        };
+        function syncTwoBoards() {
+          if (mode !== "two") return;
+          if (phase === "placement") {
+            if (two.placementPlayer === 1) { playerShips = two.p1Ships; playerOcc = two.p1Occ; }
+            else { playerShips = two.p2Ships; playerOcc = two.p2Occ; }
+            enemyShips = emptyFleet(); enemyOcc = emptyOcc();
+            playerShots = new Array(N * N).fill(null); enemyShots = new Array(N * N).fill(null);
+          } else {
+            if (two.currentPlayer === 1) {
+              playerShips = two.p1Ships; playerOcc = two.p1Occ; enemyShips = two.p2Ships; enemyOcc = two.p2Occ;
+              playerShots = two.p1Shots; enemyShots = two.p2Shots;
+              shotsFired = two.shots[1]; hitsScored = two.hits[1];
+            } else {
+              playerShips = two.p2Ships; playerOcc = two.p2Occ; enemyShips = two.p1Ships; enemyOcc = two.p1Occ;
+              playerShots = two.p2Shots; enemyShots = two.p1Shots;
+              shotsFired = two.shots[2]; hitsScored = two.hits[2];
+            }
+            sonarLeft = two.sonar[two.currentPlayer];
+          }
+        }
+        function showPass(kind, playerNum) {
+          two.passKind = kind; two.passFor = playerNum;
+          document.getElementById("passTitle").textContent = "Pass the device to Player " + playerNum;
+          document.getElementById("passText").textContent = kind === "placement"
+            ? "Player " + playerNum + ", place your fleet in secret. The other player's fleet stays hidden."
+            : "Player " + playerNum + ", it is your turn. Your fleet and your shots are ready.";
+          document.getElementById("passOverlay").hidden = false;
+        }
 
         /* ---------------- State ---------------- */
         var phase = "placement"; // placement | battle | over
@@ -898,7 +1034,7 @@
         /* ---------------- Fleet helpers ---------------- */
         function emptyFleet() {
           var f = {};
-          SHIPS.forEach(function (s) { f[s.id] = { def: s, cells: [], hits: {} }; });
+          fleetDefs.forEach(function (s) { f[s.id] = { def: s, cells: [], hits: {} }; });
           return f;
         }
         function emptyOcc() { return new Array(N * N).fill(null); }
@@ -906,11 +1042,11 @@
           return ship.cells.length > 0 && ship.cells.every(function (c) { return ship.hits[c]; });
         }
         function fleetSunkCount(fleet) {
-          return SHIPS.reduce(function (a, s) { return a + (shipSunk(fleet[s.id]) ? 1 : 0); }, 0);
+          return fleetDefs.reduce(function (a, s) { return a + (shipSunk(fleet[s.id]) ? 1 : 0); }, 0);
         }
-        function fleetAllSunk(fleet) { return fleetSunkCount(fleet) === SHIPS.length; }
+        function fleetAllSunk(fleet) { return fleetSunkCount(fleet) === fleetDefs.length; }
         function fleetAllPlaced(fleet) {
-          return SHIPS.every(function (s) { return fleet[s.id].cells.length === s.size; });
+          return fleetDefs.every(function (s) { return fleet[s.id].cells.length === s.size; });
         }
         function cellsFor(start, size, orient) {
           var cells = [];
@@ -940,7 +1076,7 @@
         }
         function randomFleet() {
           var fleet = emptyFleet(), occ = emptyOcc();
-          SHIPS.forEach(function (s) {
+          fleetDefs.forEach(function (s) {
             var placed = false, guard = 0;
             while (!placed && guard++ < 500) {
               var orient = Math.random() < 0.5 ? "h" : "v";
@@ -1179,6 +1315,66 @@
         });
         renderLifetime();
 
+        /* ---------------- Mode panel, missions and rank ---------------- */
+        function renderModePanel() {
+          var rankEl = document.getElementById("rankLine");
+          if (rankEl) {
+            rankEl.innerHTML = "Rank: <strong>" + rankTitle(missionData.points) + "</strong> (" + missionData.points +
+              " points). Current mission: <strong>" + currentMission + "</strong> of 10" +
+              (mode === "one" ? " (" + missionDifficulty(currentMission) + ")" : "") + ".";
+          }
+          var list = document.getElementById("missionList");
+          if (list) {
+            list.innerHTML = "";
+            for (var m = 1; m <= 10; m++) {
+              (function (mm) {
+                var b = document.createElement("button");
+                b.type = "button";
+                b.className = "btn" + (mm === currentMission ? " primary" : "");
+                b.textContent = "Mission " + mm + " (" + missionDifficulty(mm) + ")" +
+                  (missionData.completed[mm] ? " done" : "") +
+                  (mm > missionData.unlocked ? " locked" : "");
+                b.disabled = mm > missionData.unlocked;
+                b.addEventListener("click", function () { currentMission = mm; clickSound(); newGame(); });
+                list.appendChild(b);
+              })(m);
+            }
+          }
+          var mp = document.getElementById("missionPanel");
+          if (mp) mp.style.display = mode === "one" ? "" : "none";
+          var pp = document.getElementById("presetPanel");
+          if (pp) pp.style.display = mode === "training" ? "" : "none";
+          var tn = document.getElementById("twoNote");
+          if (tn) tn.style.display = mode === "two" ? "" : "none";
+          var pn = document.getElementById("presetNote");
+          if (pn) pn.textContent = PRESETS[presetId].note;
+          Array.prototype.forEach.call(document.getElementById("presetBtns").children, function (btn) {
+            btn.setAttribute("aria-pressed", btn.getAttribute("data-preset") === presetId ? "true" : "false");
+          });
+          Array.prototype.forEach.call(document.getElementById("modeBtns").children, function (btn) {
+            btn.setAttribute("aria-pressed", btn.getAttribute("data-mode") === mode ? "true" : "false");
+            btn.disabled = phase === "battle" && !gameOver;
+          });
+          var segEl = document.getElementById("diffSeg");
+          if (segEl) {
+            segEl.style.display = mode === "two" ? "none" : "";
+            Array.prototype.forEach.call(segEl.children, function (btn) {
+              btn.setAttribute("aria-pressed", btn.getAttribute("data-diff") === difficulty ? "true" : "false");
+              btn.disabled = mode === "one" || (phase === "battle" && !gameOver);
+            });
+          }
+          var qb = document.getElementById("quitBtn");
+          if (qb) qb.hidden = !(mode === "two" && phase === "battle" && !gameOver);
+          var ld = document.getElementById("logDetails");
+          if (ld) ld.style.display = mode === "two" ? "none" : "";
+          var trayH = document.querySelector("#tray h2");
+          if (trayH) {
+            if (mode === "two" && phase === "placement") trayH.textContent = "Player " + two.placementPlayer + ", place your fleet";
+            else if (mode === "training") trayH.textContent = "Place your fleet (" + PRESETS[presetId].name + ")";
+            else trayH.textContent = "Place your fleet";
+          }
+        }
+
         /* ---------------- Timer ---------------- */
         function elapsedMs() {
           if (startedAt === null) return elapsedBase;
@@ -1307,12 +1503,12 @@
           }
           enemyTopRight.textContent = phase === "placement"
             ? "Fleet hidden"
-            : (SHIPS.length - fleetSunkCount(enemyShips)) + " enemy ships afloat";
+            : (fleetDefs.length - fleetSunkCount(enemyShips)) + " enemy ships afloat";
         }
 
         function renderChips() {
           chipsEl.innerHTML = "";
-          SHIPS.forEach(function (s) {
+          fleetDefs.forEach(function (s) {
             var chip = document.createElement("button");
             chip.type = "button";
             chip.className = "ship-chip" +
@@ -1337,7 +1533,7 @@
 
         function renderFleetList(el, fleet, shots, isEnemy) {
           el.innerHTML = "";
-          SHIPS.forEach(function (s) {
+          fleetDefs.forEach(function (s) {
             var ship = fleet[s.id];
             var li = document.createElement("li");
             var placed = ship.cells.length === s.size;
@@ -1370,23 +1566,23 @@
           statShots.textContent = shotsFired;
           statHits.textContent = hitsScored;
           var sunk = fleetSunkCount(enemyShips);
-          statSunk.textContent = sunk + " / " + SHIPS.length;
+          statSunk.textContent = sunk + " / " + fleetDefs.length;
           statTime.textContent = fmtTime(elapsedMs());
-          var totalShipCells = 17;
+          var totalShipCells = fleetDefs.reduce(function (a, d) { return a + d.size; }, 0);
           var pct = Math.round((hitsScored / totalShipCells) * 100);
           progressBar.style.width = pct + "%";
           if (phase === "placement") {
-            var placedCount = SHIPS.filter(function (s) { return playerShips[s.id].cells.length === s.size; }).length;
-            progressNote.textContent = placedCount + " of 5 ships placed. " +
-              (placedCount === 5 ? "Fleet ready — press Start battle." : "The battle starts when all five are down.");
+            var placedCount = fleetDefs.filter(function (s) { return playerShips[s.id].cells.length === s.size; }).length;
+            progressNote.textContent = placedCount + " of " + fleetDefs.length + " ships placed. " +
+              (placedCount === fleetDefs.length ? "Fleet ready — press Start battle." : "The battle starts when all ships are down.");
           } else if (gameOver) {
             progressNote.textContent = playerWon
               ? "Enemy fleet destroyed. The sea is yours."
               : "Your fleet is on the bottom. The computer captain takes this round.";
           } else {
             progressNote.textContent = hitsScored + " of " + totalShipCells + " enemy ship squares hit — " +
-              (SHIPS.length - sunk) + " enemy ships still afloat, " +
-              (SHIPS.length - fleetSunkCount(playerShips)) + " of yours.";
+              (fleetDefs.length - sunk) + " enemy ships still afloat, " +
+              (fleetDefs.length - fleetSunkCount(playerShips)) + " of yours.";
           }
           renderFleetList(document.getElementById("playerFleetList"), playerShips, enemyShots, false);
           renderFleetList(document.getElementById("enemyFleetList"), enemyShips, playerShots, true);
@@ -1426,7 +1622,7 @@
         function previewAt(idx) {
           if (phase !== "placement") return;
           if (typeof dragState !== "undefined" && dragState && dragState.active) return;
-          var def = SHIPS.filter(function (s) { return s.id === selectedShip; })[0];
+          var def = fleetDefs.filter(function (s) { return s.id === selectedShip; })[0];
           var p = previewRC(rowOf(idx), colOf(idx), def.size, orientation, selectedShip);
           currentPreview = { cells: p.cells, ok: p.ok };
           renderPlayerBoard(currentPreview);
@@ -1448,11 +1644,11 @@
             renderChips();
             previewAt(idx);
             renderStats();
-            say("Picked up your <strong>" + SHIPS.filter(function (s) { return s.id === occ; })[0].name +
+            say("Picked up your <strong>" + fleetDefs.filter(function (s) { return s.id === occ; })[0].name +
               "</strong>. Press a square to set it down again.");
             return;
           }
-          var def = SHIPS.filter(function (s) { return s.id === selectedShip; })[0];
+          var def = fleetDefs.filter(function (s) { return s.id === selectedShip; })[0];
           var cells = cellsFor(idx, def.size, orientation);
           if (!canPlace(playerOcc, cells, selectedShip)) {
             tone(160, 0.15, "square", 0.08);
@@ -1463,7 +1659,7 @@
           placeShip(playerShips, playerOcc, selectedShip, cells);
           clickSound();
           // Advance to the next unplaced ship.
-          var next = SHIPS.filter(function (s) { return playerShips[s.id].cells.length !== s.size; })[0];
+          var next = fleetDefs.filter(function (s) { return playerShips[s.id].cells.length !== s.size; })[0];
           if (next) selectedShip = next.id;
           renderChips();
           renderAll();
@@ -1471,7 +1667,7 @@
             say("Whole fleet placed. Press <strong>Start battle</strong> when you&rsquo;re happy with it — or press any ship to move it.");
           } else {
             say("<strong>" + def.name + "</strong> placed at " + coord(cells[0]) + ". Now the <strong>" +
-              SHIPS.filter(function (s) { return s.id === selectedShip; })[0].name + "</strong>.");
+              fleetDefs.filter(function (s) { return s.id === selectedShip; })[0].name + "</strong>.");
           }
         }
 
@@ -1494,12 +1690,14 @@
           pendingTarget = -1;
           if (startedAt === null) { startedAt = Date.now(); startTimer(); }
           shotsFired++;
+          if (mode === "two") two.shots[two.currentPlayer] = shotsFired;
           var occ = enemyOcc[idx];
           var justSunk = null;
           if (occ) {
             playerShots[idx] = "hit";
             enemyShips[occ].hits[idx] = true;
             hitsScored++;
+            if (mode === "two") two.hits[two.currentPlayer] = hitsScored;
             if (shipSunk(enemyShips[occ])) justSunk = enemyShips[occ];
           } else {
             playerShots[idx] = "miss";
@@ -1524,7 +1722,12 @@
           }
 
           if (fleetAllSunk(enemyShips)) {
-            endGame(true);
+            if (mode === "two") { endGameTwo(two.currentPlayer, false); }
+            else { endGame(true); }
+            return;
+          }
+          if (mode === "two") {
+            setTimeout(function () { showPass("turn", two.currentPlayer === 1 ? 2 : 1); }, 900);
             return;
           }
           setTimeout(aiTurn, 900);
@@ -1539,7 +1742,7 @@
         /* Shared AI helpers (original code, no outside assets or rules). */
         function aiUnsunkHits() {
           var out = [];
-          SHIPS.forEach(function (s) {
+          fleetDefs.forEach(function (s) {
             var ship = playerShips[s.id];
             if (!shipSunk(ship)) {
               ship.cells.forEach(function (c) { if (enemyShots[c] === "hit") out.push(c); });
@@ -1549,7 +1752,7 @@
         }
         function aiRemainingSizes() {
           var out = [];
-          SHIPS.forEach(function (s) {
+          fleetDefs.forEach(function (s) {
             if (!shipSunk(playerShips[s.id])) out.push(s.size);
           });
           return out;
@@ -1703,6 +1906,7 @@
         }
 
         function aiTurn() {
+          if (mode === "two") { busy = false; return; }
           if (gameOver) { busy = false; return; }
           var idx = aiPick();
           if (idx < 0) { busy = false; return; }
@@ -1752,24 +1956,72 @@
           var acc = shotsFired ? Math.round((hitsScored / shotsFired) * 100) : 0;
           if (wonGame) {
             endTitle.textContent = "Victory — enemy fleet sunk!";
-            endText.innerHTML = "You sank all five enemy ships in <strong>" + shotsFired + " shots</strong> (" +
+            endText.innerHTML = "You sank all " + fleetDefs.length + " enemy ships in <strong>" + shotsFired + " shots</strong> (" +
               acc + "% accuracy) and <strong>" + fmtTime(elapsedBase) + "</strong>, with " +
-              (SHIPS.length - fleetSunkCount(playerShips)) + " of your own ships still afloat.";
+              (fleetDefs.length - fleetSunkCount(playerShips)) + " of your own ships still afloat.";
             winChime();
             confetti();
           } else {
             endTitle.textContent = "Your fleet is sunk";
             endText.innerHTML = "The computer captain sank your last ship after you fired <strong>" + shotsFired +
-              " shots</strong> and sank <strong>" + fleetSunkCount(enemyShips) + " of 5</strong> enemy ships in <strong>" +
+              " shots</strong> and sank <strong>" + fleetSunkCount(enemyShips) + " of " + fleetDefs.length + "</strong> enemy ships in <strong>" +
               fmtTime(elapsedBase) + "</strong>. Refit and sail again.";
             loseSound();
           }
+          if (mode === "one") {
+            var pts = wonGame ? 3 : 1;
+            missionData.points += pts;
+            if (wonGame) missionData.completed[currentMission] = true;
+            if (wonGame && currentMission === missionData.unlocked && missionData.unlocked < 10) missionData.unlocked++;
+            saveMissionData();
+            endText.innerHTML += " Mission " + currentMission + ": <strong>" + pts + " rank points</strong>. Rank: <strong>" +
+              rankTitle(missionData.points) + "</strong> (" + missionData.points + " points).";
+            if (wonGame && missionData.unlocked > currentMission) {
+              endText.innerHTML += " Mission " + missionData.unlocked + " is now unlocked.";
+            }
+          } else if (mode === "training") {
+            endText.innerHTML += " Practice battle: no rank points.";
+          }
           endBox.className = "endbox show " + (wonGame ? "won" : "lost");
           endBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
-          recordBattle(wonGame);
-          statsModalTimer = setTimeout(function () {
-            if (phase === "over") openStats();
-          }, 1600);
+          renderModePanel();
+          if (mode === "one") {
+            recordBattle(wonGame);
+            statsModalTimer = setTimeout(function () {
+              if (phase === "over") openStats();
+            }, 1600);
+          }
+        }
+
+        function endGameTwo(winner, quit) {
+          gameOver = true;
+          playerWon = false;
+          phase = "over";
+          busy = false;
+          elapsedBase = elapsedMs();
+          startedAt = null;
+          stopTimer();
+          document.body.setAttribute("data-phase", "over");
+          document.getElementById("passOverlay").hidden = true;
+          var loser = winner === 1 ? 2 : 1;
+          var winnerPoints = quit ? 5 : 3;
+          var loserPoints = quit ? 0 : 1;
+          endTitle.textContent = "Player " + winner + " wins!";
+          if (quit) {
+            endText.innerHTML = "Player " + winner + " wins by forfeit. Match points: Player " + winner + " <strong>" +
+              winnerPoints + " points</strong> (3 for the win plus 2 bonus points), Player " + loser + " <strong>" +
+              loserPoints + " points</strong>.";
+          } else {
+            endText.innerHTML = "Player " + winner + " sank the whole enemy fleet. Match points: Player " + winner + " <strong>" +
+              winnerPoints + " points</strong>, Player " + loser + " <strong>" + loserPoints +
+              " points</strong> for a finished battle.";
+          }
+          endBox.className = "endbox show won";
+          endBox.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          renderAll();
+          renderModePanel();
+          winChime();
+          confetti();
         }
 
         function confetti() {
@@ -1796,11 +2048,23 @@
         function newGame() {
           phase = "placement";
           document.body.setAttribute("data-phase", "placement");
-          playerShips = emptyFleet();
-          playerOcc = emptyOcc();
-          var ef = randomFleet();
-          enemyShips = ef.fleet;
-          enemyOcc = ef.occ;
+          applyModeSetup();
+          document.getElementById("passOverlay").hidden = true;
+          if (mode === "two") {
+            two.p1Ships = emptyFleet(); two.p1Occ = emptyOcc();
+            two.p2Ships = emptyFleet(); two.p2Occ = emptyOcc();
+            two.p1Shots = new Array(N * N).fill(null); two.p2Shots = new Array(N * N).fill(null);
+            two.sonar = { 1: 2, 2: 2 }; two.shots = { 1: 0, 2: 0 }; two.hits = { 1: 0, 2: 0 };
+            two.placementPlayer = 1; two.currentPlayer = 1; two.passKind = null; two.passFor = null;
+            playerShips = two.p1Ships; playerOcc = two.p1Occ;
+            enemyShips = emptyFleet(); enemyOcc = emptyOcc();
+          } else {
+            playerShips = emptyFleet();
+            playerOcc = emptyOcc();
+            var ef = randomFleet();
+            enemyShips = ef.fleet;
+            enemyOcc = ef.occ;
+          }
           playerShots = new Array(N * N).fill(null);
           enemyShots = new Array(N * N).fill(null);
           shotsFired = 0; hitsScored = 0;
@@ -1809,7 +2073,7 @@
           statsRecorded = false;
           if (statsModalTimer !== null) { clearTimeout(statsModalTimer); statsModalTimer = null; }
           closeStats();
-          selectedShip = "carrier";
+          selectedShip = fleetDefs[0].id;
           orientation = "h";
           pendingTarget = -1;
           clearLog();
@@ -1821,11 +2085,38 @@
           trayEl.style.display = "";
           renderChips();
           renderAll();
-          say("Place your fleet, Captain. Drag ships onto <strong>Your Fleet</strong>, or tap a ship then tap squares — or hit <strong>Random fleet</strong> and adjust from there.");
+          renderModePanel();
+          if (mode === "two") {
+            say("Player 1, place your fleet in secret. Drag ships onto <strong>Your Fleet</strong>, or tap a ship then tap squares — or hit <strong>Random fleet</strong> and adjust from there.");
+          } else {
+            say("Place your fleet, Captain. Drag ships onto <strong>Your Fleet</strong>, or tap a ship then tap squares — or hit <strong>Random fleet</strong> and adjust from there.");
+          }
         }
 
         function startBattle() {
           if (!fleetAllPlaced(playerShips)) return;
+          if (mode === "two") {
+            if (two.placementPlayer === 1) {
+              two.placementPlayer = 2;
+              selectedShip = fleetDefs[0].id;
+              orientation = "h";
+              rotateLabel.textContent = "Direction: across";
+              renderModePanel();
+              showPass("placement", 2);
+              return;
+            }
+            phase = "battle";
+            document.body.setAttribute("data-phase", "battle");
+            trayEl.style.display = "none";
+            clearPreview();
+            two.currentPlayer = 1;
+            syncTwoBoards();
+            renderAll();
+            renderModePanel();
+            showPass("turn", 1);
+            logEvent("Battle started — Player 1 fires first.");
+            return;
+          }
           // Fresh enemy fleet for the battle.
           var ef = randomFleet();
           enemyShips = ef.fleet;
@@ -1838,6 +2129,7 @@
           tone(660, 0.1, "triangle", 0.11);
           say("Battle stations! The enemy fleet is out there somewhere. <strong>Press a square in Enemy Waters to fire your first shot.</strong>", "good");
           logEvent("Battle started — you fire first.");
+          renderModePanel();
           document.getElementById("enemyFrame").scrollIntoView({ block: "nearest", behavior: "smooth" });
         }
 
@@ -1860,6 +2152,10 @@
           var rf = randomFleet();
           playerShips = rf.fleet;
           playerOcc = rf.occ;
+          if (mode === "two") {
+            if (two.placementPlayer === 1) { two.p1Ships = playerShips; two.p1Occ = playerOcc; }
+            else { two.p2Ships = playerShips; two.p2Occ = playerOcc; }
+          }
           clickSound();
           renderChips();
           renderAll();
@@ -1868,7 +2164,11 @@
         document.getElementById("clearBtn").addEventListener("click", function () {
           playerShips = emptyFleet();
           playerOcc = emptyOcc();
-          selectedShip = "carrier";
+          if (mode === "two") {
+            if (two.placementPlayer === 1) { two.p1Ships = playerShips; two.p1Occ = playerOcc; }
+            else { two.p2Ships = playerShips; two.p2Occ = playerOcc; }
+          }
+          selectedShip = fleetDefs[0].id;
           clickSound();
           renderChips();
           renderAll();
@@ -1884,6 +2184,7 @@
           if (!targets.length) return;
           sonarIdx = targets[Math.floor(Math.random() * targets.length)];
           sonarLeft--;
+          if (mode === "two") two.sonar[two.currentPlayer] = sonarLeft;
           tone(880, 0.12, "sine", 0.11); tone(880, 0.12, "sine", 0.11, 0.22);
           renderAll();
           say("Sonar ping… contact! The pulsing square at <strong>" + coord(sonarIdx) +
@@ -1964,7 +2265,7 @@
           setOrientation(d.orient);
           if (playerShips[d.shipId].cells.length) removeShip(playerShips, playerOcc, d.shipId);
           renderChips();
-          var def = SHIPS.filter(function (s) { return s.id === d.shipId; })[0];
+          var def = fleetDefs.filter(function (s) { return s.id === d.shipId; })[0];
           dragGhost.textContent = def.name + " · " + def.size + " squares";
           dragGhost.classList.add("on");
           tone(520, 0.06, "triangle", 0.07);
@@ -1978,7 +2279,7 @@
             return;
           }
           var idx = Number(cell.dataset.idx);
-          var def = SHIPS.filter(function (s) { return s.id === dragState.shipId; })[0];
+          var def = fleetDefs.filter(function (s) { return s.id === dragState.shipId; })[0];
           var r = rowOf(idx) - (dragState.orient === "v" ? dragState.grab : 0);
           var c = colOf(idx) - (dragState.orient === "h" ? dragState.grab : 0);
           dragState.preview = previewRC(r, c, def.size, dragState.orient, dragState.shipId);
@@ -1996,8 +2297,8 @@
           if (commit && d.preview && d.preview.ok) {
             placeShip(playerShips, playerOcc, d.shipId, d.preview.full);
             clickSound();
-            var def = SHIPS.filter(function (s) { return s.id === d.shipId; })[0];
-            var next = SHIPS.filter(function (s) { return playerShips[s.id].cells.length !== s.size; })[0];
+            var def = fleetDefs.filter(function (s) { return s.id === d.shipId; })[0];
+            var next = fleetDefs.filter(function (s) { return playerShips[s.id].cells.length !== s.size; })[0];
             if (next) selectedShip = next.id;
             renderChips();
             renderAll();
@@ -2032,7 +2333,7 @@
           if (!chip) return;
           var pos = Array.prototype.slice.call(chipsEl.children).indexOf(chip);
           if (pos < 0) return;
-          var id = SHIPS[pos].id;
+          var id = fleetDefs[pos].id;
           var ship = playerShips[id];
           beginDragCandidate(id, 0, ship.cells, ship.cells.length ? shipOrientation(ship) : orientation, e.clientX, e.clientY, e.pointerId);
         });
@@ -2065,6 +2366,55 @@
           if (phase === "placement" && (e.key === "r" || e.key === "R")) {
             document.getElementById("rotateBtn").click();
           }
+        });
+
+        /* ---------------- Mode, preset, pass and quit wiring ---------------- */
+        document.getElementById("modeBtns").addEventListener("click", function (e) {
+          var btn = e.target.closest ? e.target.closest("button[data-mode]") : null;
+          if (!btn || btn.disabled) return;
+          mode = btn.getAttribute("data-mode");
+          clickSound();
+          newGame();
+        });
+        document.getElementById("presetBtns").addEventListener("click", function (e) {
+          var btn = e.target.closest ? e.target.closest("button[data-preset]") : null;
+          if (!btn) return;
+          presetId = btn.getAttribute("data-preset");
+          clickSound();
+          newGame();
+        });
+        document.getElementById("passBtn").addEventListener("click", function () {
+          var kind = two.passKind, forPlayer = two.passFor;
+          document.getElementById("passOverlay").hidden = true;
+          if (mode !== "two" || !forPlayer) return;
+          if (kind === "placement") {
+            phase = "placement";
+            document.body.setAttribute("data-phase", "placement");
+            trayEl.style.display = "";
+            syncTwoBoards();
+            selectedShip = fleetDefs[0].id;
+            renderChips();
+            renderAll();
+            renderModePanel();
+            say("Player " + forPlayer + ", place your fleet in secret. Drag ships onto <strong>Your Fleet</strong>, or tap a ship then tap squares.");
+          } else if (kind === "turn") {
+            two.currentPlayer = forPlayer;
+            phase = "battle";
+            document.body.setAttribute("data-phase", "battle");
+            trayEl.style.display = "none";
+            busy = false;
+            syncTwoBoards();
+            renderAll();
+            renderModePanel();
+            say("Player " + forPlayer + ", your turn. Tap a square in Enemy Waters to fire.");
+          }
+          two.passKind = null; two.passFor = null;
+        });
+        document.getElementById("quitBtn").addEventListener("click", function () {
+          if (mode !== "two" || phase !== "battle" || gameOver) return;
+          var winner = two.currentPlayer === 1 ? 2 : 1;
+          if (!window.confirm("Quit this battle? Player " + winner + " wins, with 2 bonus points.")) return;
+          endGameTwo(winner, true);
         });
 
         newGame();
