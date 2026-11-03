@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2E7D32">
+<title>Monroe's Arrow Escape</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;color:#22201A;background:#FFF9EC;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+.hubbar{background:#2E7D32;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px}
+.hubbar .hubname{font-weight:900;font-size:17px}
+.hubbar a{color:#fff;font-weight:800;min-height:52px;display:inline-flex;align-items:center;padding:0 6px}
+.hubfooter{text-align:center;padding:18px 16px 24px;color:#6F7261;font-weight:700}
+.topbar{background:#FFF9EC;color:#22201A;padding:14px 16px;border-bottom:4px solid #D9A441}
+.topbar h1{font-size:clamp(26px,6vw,34px);margin:0}
+.topbar p{margin:4px 0 0;font-weight:700;opacity:.92}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+.card{background:#FFFFFF;border:1px solid #DFD2B4;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(34,51,42,.06),0 4px 14px rgba(34,51,42,.05)}
+h2{font-family:system-ui,-apple-system,sans-serif;margin:0 0 8px}
+p{line-height:1.5}
+.muted{color:#6F7261;font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:14px 20px;border-radius:14px;border:2px solid #E5D9B8;background:#FFFFFF;font-weight:800;font-size:16px;cursor:pointer}
+.btn.primary{background:#2E7D32;color:#fff;border-color:#2E7D32;border-bottom:4px solid #D9A441}
+.btn:active{transform:translateY(1px)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1}
+.levelgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.levelbtn{min-height:64px;border-radius:14px;border:2px solid #DFD2B4;background:#FFFDF4;font-weight:800;font-size:20px;cursor:pointer}
+.levelbtn.done{border-color:#D9A441;background:#FFF3D6}
+.levelbtn .stars{display:block;font-size:13px;color:#B98A1C;letter-spacing:2px}
+.board{width:min(100%,520px);margin:0 auto;display:grid;gap:4px}
+.cell{aspect-ratio:1;border-radius:14px;background:#EFE8D3;border:1px solid #DFD2B4;display:grid;place-items:center;transition:background .25s ease,border-color .25s ease}
+.arrow{width:100%;height:100%;border:0;border-radius:14px;color:#fff;font-size:clamp(30px,9vw,52px);font-weight:900;cursor:pointer;transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .45s cubic-bezier(.22,1,.36,1);line-height:1}
+.arrow.fly-U{transform:translateY(-130%);opacity:0}
+.arrow.fly-D{transform:translateY(130%);opacity:0}
+.arrow.fly-L{transform:translateX(-130%);opacity:0}
+.arrow.fly-R{transform:translateX(130%);opacity:0}
+.arrow.wiggle{animation:wiggle .4s}
+.cell.path-hit{background:#F9CFCF;border-color:#E53935}
+.cell.path-blocker{outline:4px solid #C62828;outline-offset:-3px;background:#FFCDD2;box-shadow:inset 0 0 0 2px #C62828}
+.trainseg{position:relative;width:100%;height:100%;border:0;background:transparent;cursor:pointer;padding:0;transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .45s cubic-bezier(.22,1,.36,1)}
+.trainseg .segbar{position:absolute}
+.trainseg .segdot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54%;height:54%;border-radius:28%;display:grid;place-items:center;color:#fff;font-weight:900}
+.trainseg .headglyph{font-size:clamp(15px,4.5vw,26px);line-height:1}
+.trainseg.wiggle{animation:wiggle .4s}
+.trainseg.hint-pulse{animation:pulse 1s infinite;outline:4px solid #D9A441;outline-offset:2px}
+.trainseg.fly-U{transform:translateY(-130%);opacity:0}
+.trainseg.fly-D{transform:translateY(130%);opacity:0}
+.trainseg.fly-L{transform:translateX(-130%);opacity:0}
+.trainseg.fly-R{transform:translateX(130%);opacity:0}
+.arrow.hint-pulse{animation:pulse 1s infinite;outline:4px solid #D9A441;outline-offset:2px}
+@keyframes wiggle{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+#msg{min-height:26px;text-align:center;font-weight:800;margin:12px 0 4px}
+.overlay{position:fixed;inset:0;background:rgba(14,20,16,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+.overlay.open{display:flex}
+.sheet{background:#FFFFFF;border-radius:20px;border-top:6px solid #D9A441;padding:26px 22px;text-align:center;max-width:420px;width:100%}
+.sheet .big{font-family:system-ui,-apple-system,sans-serif;font-size:32px;margin:6px 0}
+.sheet .stars{font-size:40px;color:#D9A441;letter-spacing:6px}
+.confetti{position:fixed;top:-30px;font-size:26px;z-index:60;pointer-events:none;animation:fall 2.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(340deg);opacity:.2}}
+</style>
+</head>
+<body>
+<header class="hubbar"><span class="hubname">No 13th Floor Games</span><a href="index.html">Back to all games</a></header>
+<header class="topbar">
+  <h1>Monroe's Arrow Escape</h1>
+  <p>Slide every arrow off the board.</p>
+</header>
+<main class="wrap">
+
+  <!-- LEVEL SELECT -->
+  <section id="homeScreen">
+    <div class="card">
+      <h2>How to play</h2>
+      <p class="muted" style="margin:6px 0">Tap an arrow and it slides off the board in the direction it points. If another arrow is in the way, it is stuck — the red path shows you what is blocking it, so try clearing that arrow first. Clear them all and you win. No timer, no lives, just thinking.</p>
+    </div>
+    <div class="row" style="margin-bottom:12px"><button class="btn" id="soundBtnHome" type="button">Sound: On</button></div>
+    <h2>Pick a level</h2>
+    <div class="levelgrid" id="levelGrid"></div>
+    <h2 style="margin-top:20px">Advanced — thin trains</h2>
+    <p class="muted" style="font-weight:700;margin:0 0 12px">Arrows become little trains of thin squares. Tap any square of a train to slide the whole train out — its head still needs a clear path to the edge.</p>
+    <div class="levelgrid" id="advGrid"></div>
+  </section>
+
+  <!-- PLAY -->
+  <section id="playScreen" style="display:none">
+    <div class="row" style="margin-bottom:12px">
+      <button class="btn" id="backBtn" type="button">← Levels</button>
+      <button class="btn" id="restartBtn" type="button">Restart</button>
+    </div>
+    <h2 id="levelTitle" style="text-align:center">Level 1</h2>
+    <div class="board" id="board"></div>
+    <p id="msg"></p>
+    <div class="row">
+      <button class="btn" id="hintBtn" type="button">Hint</button>
+      <button class="btn" id="undoBtn" type="button">Undo</button>
+      <button class="btn" id="soundBtn" type="button">Sound: On</button>
+    </div>
+  </section>
+
+</main>
+<footer class="hubfooter">Saved on your device only. No accounts, no ads.</footer>
+<div class="overlay" id="winOverlay"><div class="sheet">
+  <div class="stars">★★★</div>
+  <div class="big">You did it, Monroe!</div>
+  <p class="muted" style="font-weight:700">Every arrow is off the board.</p>
+  <div class="row" style="margin-top:16px">
+    <button class="btn primary" id="nextBtn" type="button">Next Level</button>
+    <button class="btn" id="allBtn" type="button">All Levels</button>
+  </div>
+</div></div>
+
+<script>
+"use strict";
+var LEVELS = /*__LEVELS__*/[{"level":1,"size":4,"arrows":[{"r":0,"c":2,"d":"L"},{"r":1,"c":2,"d":"R"},{"r":3,"c":2,"d":"U"},{"r":3,"c":3,"d":"D"},{"r":1,"c":1,"d":"U"},{"r":2,"c":3,"d":"R"}]},{"level":2,"size":4,"arrows":[{"r":1,"c":1,"d":"U"},{"r":2,"c":3,"d":"R"},{"r":3,"c":3,"d":"R"},{"r":0,"c":0,"d":"L"},{"r":0,"c":3,"d":"U"},{"r":3,"c":1,"d":"R"}]},{"level":3,"size":4,"arrows":[{"r":1,"c":3,"d":"R"},{"r":3,"c":3,"d":"D"},{"r":1,"c":2,"d":"L"},{"r":0,"c":1,"d":"D"},{"r":2,"c":2,"d":"U"},{"r":3,"c":0,"d":"D"}]},{"level":4,"size":4,"arrows":[{"r":3,"c":3,"d":"D"},{"r":2,"c":1,"d":"L"},{"r":0,"c":0,"d":"U"},{"r":2,"c":3,"d":"U"},{"r":1,"c":2,"d":"R"},{"r":2,"c":2,"d":"R"}]},{"level":5,"size":4,"arrows":[{"r":1,"c":2,"d":"U"},{"r":0,"c":3,"d":"U"},{"r":2,"c":3,"d":"U"},{"r":3,"c":2,"d":"R"},{"r":3,"c":1,"d":"R"},{"r":2,"c":0,"d":"R"},{"r":0,"c":1,"d":"U"}]},{"level":6,"size":4,"arrows":[{"r":0,"c":1,"d":"R"},{"r":3,"c":1,"d":"L"},{"r":2,"c":0,"d":"L"},{"r":0,"c":0,"d":"L"},{"r":1,"c":0,"d":"D"},{"r":1,"c":3,"d":"R"},{"r":3,"c":3,"d":"R"}]},{"level":7,"size":4,"arrows":[{"r":3,"c":2,"d":"D"},{"r":2,"c":3,"d":"R"},{"r":0,"c":3,"d":"U"},{"r":0,"c":1,"d":"L"},{"r":3,"c":0,"d":"L"},{"r":1,"c":0,"d":"U"},{"r":1,"c":2,"d":"L"},{"r":1,"c":3,"d":"D"}]},{"level":8,"size":4,"arrows":[{"r":2,"c":2,"d":"R"},{"r":0,"c":0,"d":"R"},{"r":1,"c":1,"d":"U"},{"r":3,"c":3,"d":"R"},{"r":3,"c":0,"d":"D"},{"r":1,"c":2,"d":"U"},{"r":2,"c":1,"d":"R"},{"r":3,"c":1,"d":"R"}]},{"level":9,"size":5,"arrows":[{"r":0,"c":0,"d":"L"},{"r":4,"c":1,"d":"L"},{"r":4,"c":3,"d":"R"},{"r":0,"c":2,"d":"U"},{"r":2,"c":2,"d":"U"},{"r":1,"c":1,"d":"D"},{"r":3,"c":0,"d":"L"},{"r":0,"c":1,"d":"L"}]},{"level":10,"size":5,"arrows":[{"r":1,"c":2,"d":"L"},{"r":1,"c":4,"d":"R"},{"r":2,"c":4,"d":"R"},{"r":4,"c":1,"d":"R"},{"r":2,"c":2,"d":"R"},{"r":3,"c":1,"d":"D"},{"r":1,"c":3,"d":"L"},{"r":0,"c":2,"d":"R"}]},{"level":11,"size":5,"arrows":[{"r":1,"c":1,"d":"U"},{"r":2,"c":4,"d":"R"},{"r":4,"c":3,"d":"R"},{"r":3,"c":2,"d":"L"},{"r":3,"c":4,"d":"D"},{"r":1,"c":2,"d":"U"},{"r":4,"c":0,"d":"D"},{"r":2,"c":2,"d":"R"}]},{"level":12,"size":5,"arrows":[{"r":3,"c":2,"d":"L"},{"r":0,"c":4,"d":"U"},{"r":1,"c":4,"d":"R"},{"r":1,"c":2,"d":"L"},{"r":2,"c":1,"d":"D"},{"r":3,"c":4,"d":"U"},{"r":2,"c":2,"d":"D"},{"r":2,"c":0,"d":"D"}]},{"level":13,"size":5,"arrows":[{"r":4,"c":3,"d":"R"},{"r":2,"c":3,"d":"D"},{"r":0,"c":3,"d":"R"},{"r":0,"c":2,"d":"R"},{"r":1,"c":1,"d":"U"},{"r":2,"c":2,"d":"D"},{"r":4,"c":0,"d":"D"},{"r":3,"c":1,"d":"L"},{"r":1,"c":0,"d":"D"}]},{"level":14,"size":5,"arrows":[{"r":1,"c":0,"d":"U"},{"r":0,"c":4,"d":"R"},{"r":4,"c":4,"d":"L"},{"r":1,"c":2,"d":"L"},{"r":3,"c":1,"d":"R"},{"r":1,"c":4,"d":"U"},{"r":3,"c":0,"d":"D"},{"r":0,"c":2,"d":"D"},{"r":2,"c":0,"d":"U"}]},{"level":15,"size":5,"arrows":[{"r":2,"c":0,"d":"U"},{"r":0,"c":1,"d":"L"},{"r":1,"c":4,"d":"U"},{"r":4,"c":1,"d":"R"},{"r":4,"c":0,"d":"D"},{"r":2,"c":4,"d":"D"},{"r":1,"c":1,"d":"U"},{"r":3,"c":3,"d":"U"},{"r":1,"c":2,"d":"L"},{"r":2,"c":1,"d":"U"}]},{"level":16,"size":5,"arrows":[{"r":2,"c":3,"d":"U"},{"r":1,"c":2,"d":"U"},{"r":4,"c":3,"d":"R"},{"r":3,"c":0,"d":"L"},{"r":0,"c":4,"d":"L"},{"r":2,"c":4,"d":"D"},{"r":3,"c":3,"d":"R"},{"r":4,"c":2,"d":"R"},{"r":1,"c":4,"d":"D"},{"r":2,"c":1,"d":"D"}]},{"level":17,"size":5,"arrows":[{"r":2,"c":1,"d":"L"},{"r":4,"c":1,"d":"D"},{"r":1,"c":3,"d":"U"},{"r":1,"c":2,"d":"U"},{"r":4,"c":4,"d":"D"},{"r":2,"c":4,"d":"U"},{"r":0,"c":1,"d":"R"},{"r":3,"c":0,"d":"L"},{"r":3,"c":4,"d":"L"},{"r":1,"c":0,"d":"L"}]},{"level":18,"size":6,"arrows":[{"r":1,"c":3,"d":"U"},{"r":1,"c":0,"d":"L"},{"r":2,"c":2,"d":"U"},{"r":0,"c":5,"d":"U"},{"r":2,"c":0,"d":"U"},{"r":5,"c":1,"d":"D"},{"r":5,"c":4,"d":"L"},{"r":1,"c":1,"d":"R"},{"r":4,"c":1,"d":"U"},{"r":2,"c":3,"d":"U"},{"r":2,"c":4,"d":"R"},{"r":3,"c":0,"d":"L"}]},{"level":19,"size":6,"arrows":[{"r":4,"c":2,"d":"D"},{"r":4,"c":5,"d":"R"},{"r":1,"c":5,"d":"U"},{"r":1,"c":0,"d":"U"},{"r":1,"c":1,"d":"L"},{"r":1,"c":3,"d":"L"},{"r":4,"c":4,"d":"L"},{"r":3,"c":5,"d":"R"},{"r":5,"c":4,"d":"L"},{"r":2,"c":1,"d":"D"},{"r":0,"c":2,"d":"L"},{"r":2,"c":3,"d":"R"}]},{"level":20,"size":6,"arrows":[{"r":2,"c":2,"d":"L"},{"r":5,"c":0,"d":"L"},{"r":1,"c":5,"d":"R"},{"r":4,"c":0,"d":"R"},{"r":3,"c":5,"d":"D"},{"r":1,"c":0,"d":"U"},{"r":0,"c":4,"d":"U"},{"r":2,"c":3,"d":"L"},{"r":1,"c":2,"d":"R"},{"r":5,"c":2,"d":"L"},{"r":0,"c":1,"d":"D"},{"r":3,"c":2,"d":"R"}]},{"level":21,"size":6,"arrows":[{"r":3,"c":3,"d":"D"},{"r":1,"c":4,"d":"U"},{"r":3,"c":2,"d":"U"},{"r":0,"c":0,"d":"U"},{"r":4,"c":0,"d":"L"},{"r":0,"c":1,"d":"L"},{"r":1,"c":3,"d":"L"},{"r":4,"c":4,"d":"R"},{"r":0,"c":3,"d":"U"},{"r":2,"c":1,"d":"U"},{"r":4,"c":1,"d":"L"},{"r":5,"c":1,"d":"L"},{"r":0,"c":5,"d":"D"}]},{"level":22,"size":6,"arrows":[{"r":3,"c":0,"d":"L"},{"r":0,"c":1,"d":"U"},{"r":2,"c":5,"d":"R"},{"r":4,"c":3,"d":"D"},{"r":2,"c":0,"d":"U"},{"r":2,"c":4,"d":"L"},{"r":1,"c":3,"d":"R"},{"r":0,"c":3,"d":"L"},{"r":3,"c":5,"d":"R"},{"r":0,"c":5,"d":"D"},{"r":1,"c":2,"d":"R"},{"r":4,"c":1,"d":"D"},{"r":5,"c":2,"d":"D"},{"r":5,"c":4,"d":"D"}]},{"level":23,"size":6,"arrows":[{"r":0,"c":2,"d":"L"},{"r":2,"c":3,"d":"R"},{"r":5,"c":3,"d":"D"},{"r":1,"c":5,"d":"R"},{"r":4,"c":4,"d":"U"},{"r":1,"c":1,"d":"U"},{"r":2,"c":2,"d":"R"},{"r":5,"c":2,"d":"D"},{"r":3,"c":5,"d":"R"},{"r":0,"c":5,"d":"U"},{"r":2,"c":0,"d":"U"},{"r":4,"c":5,"d":"D"},{"r":3,"c":2,"d":"D"},{"r":1,"c":3,"d":"U"},{"r":4,"c":1,"d":"L"}]},{"level":24,"size":6,"arrows":[{"r":2,"c":1,"d":"R"},{"r":3,"c":2,"d":"D"},{"r":5,"c":5,"d":"D"},{"r":0,"c":5,"d":"U"},{"r":0,"c":0,"d":"U"},{"r":3,"c":0,"d":"L"},{"r":4,"c":3,"d":"D"},{"r":1,"c":4,"d":"R"},{"r":3,"c":3,"d":"D"},{"r":3,"c":5,"d":"R"},{"r":2,"c":0,"d":"L"},{"r":1,"c":1,"d":"L"},{"r":4,"c":4,"d":"R"},{"r":3,"c":1,"d":"R"},{"r":0,"c":2,"d":"L"},{"r":4,"c":1,"d":"D"}]}];
+var ADV_LEVELS = [{"level":25,"size":6,"trains":[{"cells":[[1,0],[0,0]],"dir":"L"},{"cells":[[2,4],[3,4]],"dir":"D"},{"cells":[[5,3],[5,2]],"dir":"L"},{"cells":[[3,3],[3,2]],"dir":"D"},{"cells":[[1,1],[2,1],[2,0]],"dir":"U"},{"cells":[[4,1],[3,1]],"dir":"L"},{"cells":[[1,2],[0,2]],"dir":"U"}]},{"level":26,"size":6,"trains":[{"cells":[[1,4],[0,4],[0,5]],"dir":"D"},{"cells":[[4,4],[4,3]],"dir":"D"},{"cells":[[1,2],[2,2]],"dir":"R"},{"cells":[[3,3],[3,2],[4,2]],"dir":"R"},{"cells":[[0,0],[0,1]],"dir":"D"},{"cells":[[1,3],[0,3]],"dir":"R"},{"cells":[[4,0],[3,0],[2,0]],"dir":"L"}]},{"level":27,"size":6,"trains":[{"cells":[[4,2],[5,2]],"dir":"R"},{"cells":[[1,2],[0,2]],"dir":"U"},{"cells":[[1,5],[2,5],[3,5]],"dir":"R"},{"cells":[[3,2],[3,1],[4,1]],"dir":"D"},{"cells":[[0,4],[0,3],[1,3]],"dir":"R"},{"cells":[[2,3],[2,4]],"dir":"U"},{"cells":[[4,5],[4,4]],"dir":"U"},{"cells":[[3,0],[2,0],[1,0]],"dir":"U"}]},{"level":28,"size":6,"trains":[{"cells":[[0,5],[1,5],[1,4]],"dir":"U"},{"cells":[[1,0],[0,0]],"dir":"U"},{"cells":[[0,1],[0,2]],"dir":"R"},{"cells":[[2,2],[3,2],[3,3]],"dir":"D"},{"cells":[[4,1],[4,2]],"dir":"U"},{"cells":[[4,0],[3,0],[2,0]],"dir":"U"},{"cells":[[5,4],[5,5]],"dir":"D"},{"cells":[[2,5],[3,5],[3,4]],"dir":"U"}]},{"level":29,"size":6,"trains":[{"cells":[[1,1],[1,0]],"dir":"L"},{"cells":[[3,3],[2,3]],"dir":"R"},{"cells":[[3,1],[3,2]],"dir":"R"},{"cells":[[2,2],[1,2]],"dir":"U"},{"cells":[[3,0],[2,0]],"dir":"L"},{"cells":[[5,3],[5,2],[4,2]],"dir":"U"},{"cells":[[4,0],[5,0],[5,1]],"dir":"U"},{"cells":[[5,5],[4,5]],"dir":"R"},{"cells":[[0,3],[0,4],[1,4]],"dir":"L"}]},{"level":30,"size":6,"trains":[{"cells":[[1,1],[0,1]],"dir":"L"},{"cells":[[2,3],[3,3],[3,4]],"dir":"R"},{"cells":[[5,1],[5,0],[4,0]],"dir":"L"},{"cells":[[1,0],[2,0],[2,1]],"dir":"U"},{"cells":[[2,5],[1,5]],"dir":"R"},{"cells":[[4,4],[4,5],[5,5]],"dir":"L"},{"cells":[[2,4],[1,4],[1,3]],"dir":"D"},{"cells":[[4,1],[3,1],[3,0]],"dir":"L"},{"cells":[[0,2],[1,2],[2,2]],"dir":"D"}]},{"level":31,"size":6,"trains":[{"cells":[[4,5],[5,5]],"dir":"D"},{"cells":[[0,2],[0,1]],"dir":"L"},{"cells":[[4,1],[5,1]],"dir":"D"},{"cells":[[3,5],[2,5],[1,5]],"dir":"U"},{"cells":[[5,0],[4,0],[3,0]],"dir":"L"},{"cells":[[0,3],[0,4],[1,4]],"dir":"R"},{"cells":[[1,0],[2,0],[2,1]],"dir":"R"},{"cells":[[5,4],[4,4]],"dir":"U"},{"cells":[[3,2],[3,1]],"dir":"D"},{"cells":[[5,3],[5,2]],"dir":"D"}]},{"level":32,"size":6,"trains":[{"cells":[[4,2],[4,3]],"dir":"D"},{"cells":[[3,2],[3,3]],"dir":"D"},{"cells":[[0,1],[0,0],[1,0]],"dir":"L"},{"cells":[[0,4],[0,5],[1,5]],"dir":"R"},{"cells":[[4,0],[3,0],[2,0]],"dir":"L"},{"cells":[[0,3],[1,3],[1,4]],"dir":"U"},{"cells":[[4,1],[5,1],[5,0]],"dir":"L"},{"cells":[[2,1],[2,2],[1,2]],"dir":"R"},{"cells":[[4,4],[5,4]],"dir":"R"},{"cells":[[4,5],[3,5],[2,5]],"dir":"L"}]},{"level":33,"size":7,"trains":[{"cells":[[1,6],[0,6]],"dir":"R"},{"cells":[[5,2],[5,3]],"dir":"D"},{"cells":[[2,0],[3,0],[4,0]],"dir":"D"},{"cells":[[4,4],[5,4],[6,4],[6,5]],"dir":"D"},{"cells":[[4,6],[5,6],[6,6]],"dir":"L"},{"cells":[[0,4],[0,3],[0,2],[1,2]],"dir":"R"},{"cells":[[0,1],[0,0]],"dir":"D"},{"cells":[[2,5],[2,6],[3,6]],"dir":"R"}]},{"level":34,"size":7,"trains":[{"cells":[[0,4],[0,3],[0,2]],"dir":"U"},{"cells":[[3,2],[3,3]],"dir":"R"},{"cells":[[5,0],[5,1],[6,1]],"dir":"L"},{"cells":[[5,6],[5,5],[5,4],[5,3]],"dir":"D"},{"cells":[[6,2],[5,2],[4,2],[4,1]],"dir":"U"},{"cells":[[2,3],[1,3]],"dir":"U"},{"cells":[[4,0],[3,0]],"dir":"L"},{"cells":[[6,5],[6,4]],"dir":"U"}]},{"level":35,"size":7,"trains":[{"cells":[[6,4],[5,4],[5,3]],"dir":"D"},{"cells":[[6,5],[5,5]],"dir":"R"},{"cells":[[4,4],[4,3],[4,2],[5,2]],"dir":"R"},{"cells":[[2,3],[2,2]],"dir":"U"},{"cells":[[6,1],[6,0]],"dir":"L"},{"cells":[[0,5],[1,5],[1,4],[0,4]],"dir":"U"},{"cells":[[5,1],[5,0],[4,0]],"dir":"U"},{"cells":[[3,3],[3,4],[3,5],[4,5]],"dir":"D"},{"cells":[[3,1],[4,1]],"dir":"D"}]},{"level":36,"size":7,"trains":[{"cells":[[2,6],[1,6],[0,6],[0,5]],"dir":"U"},{"cells":[[3,5],[2,5],[1,5]],"dir":"U"},{"cells":[[5,3],[4,3]],"dir":"R"},{"cells":[[4,0],[4,1],[4,2]],"dir":"D"},{"cells":[[3,4],[3,3],[2,3],[1,3]],"dir":"U"},{"cells":[[6,5],[6,4],[5,4],[5,5]],"dir":"R"},{"cells":[[1,2],[1,1],[1,0],[0,0]],"dir":"L"},{"cells":[[6,1],[5,1],[5,0],[6,0]],"dir":"D"},{"cells":[[2,1],[3,1],[3,0]],"dir":"L"}]},{"level":37,"size":7,"trains":[{"cells":[[6,6],[5,6],[4,6],[3,6]],"dir":"R"},{"cells":[[5,4],[4,4],[3,4]],"dir":"R"},{"cells":[[1,2],[0,2],[0,1]],"dir":"L"},{"cells":[[3,1],[3,2]],"dir":"D"},{"cells":[[1,1],[1,0],[2,0]],"dir":"L"},{"cells":[[5,1],[6,1],[6,0]],"dir":"L"},{"cells":[[1,5],[0,5],[0,6],[1,6]],"dir":"D"},{"cells":[[2,4],[2,3],[2,2],[2,1]],"dir":"U"},{"cells":[[5,3],[6,3]],"dir":"R"},{"cells":[[3,3],[4,3]],"dir":"L"}]},{"level":38,"size":7,"trains":[{"cells":[[2,1],[3,1]],"dir":"D"},{"cells":[[0,3],[1,3]],"dir":"R"},{"cells":[[4,3],[3,3],[2,3]],"dir":"U"},{"cells":[[2,6],[2,5],[2,4],[3,4]],"dir":"R"},{"cells":[[6,4],[5,4]],"dir":"L"},{"cells":[[4,0],[3,0]],"dir":"L"},{"cells":[[1,2],[2,2]],"dir":"R"},{"cells":[[4,5],[5,5],[5,6]],"dir":"D"},{"cells":[[2,0],[1,0],[1,1]],"dir":"U"},{"cells":[[0,6],[0,5],[0,4]],"dir":"D"}]},{"level":39,"size":7,"trains":[{"cells":[[1,5],[0,5],[0,6]],"dir":"R"},{"cells":[[5,5],[6,5],[6,4]],"dir":"D"},{"cells":[[5,4],[5,3]],"dir":"D"},{"cells":[[5,1],[4,1],[4,0]],"dir":"L"},{"cells":[[1,2],[2,2],[2,3],[1,3]],"dir":"U"},{"cells":[[2,1],[3,1]],"dir":"D"},{"cells":[[2,6],[1,6]],"dir":"U"},{"cells":[[0,4],[1,4],[2,4],[2,5]],"dir":"R"},{"cells":[[3,2],[4,2],[5,2],[6,2]],"dir":"D"},{"cells":[[3,5],[4,5],[4,6],[5,6]],"dir":"L"},{"cells":[[1,0],[1,1],[0,1],[0,2]],"dir":"D"}]},{"level":40,"size":7,"trains":[{"cells":[[5,5],[6,5]],"dir":"R"},{"cells":[[1,4],[0,4]],"dir":"R"},{"cells":[[5,2],[6,2],[6,1]],"dir":"L"},{"cells":[[3,3],[4,3],[4,2],[3,2]],"dir":"L"},{"cells":[[1,0],[1,1],[2,1]],"dir":"L"},{"cells":[[6,3],[6,4]],"dir":"R"},{"cells":[[5,1],[4,1],[4,0]],"dir":"U"},{"cells":[[2,2],[1,2]],"dir":"L"},{"cells":[[4,5],[3,5],[3,6],[4,6]],"dir":"D"},{"cells":[[1,5],[2,5],[2,6],[1,6]],"dir":"R"},{"cells":[[0,1],[0,2],[0,3],[1,3]],"dir":"L"}]},{"level":41,"size":8,"trains":[{"cells":[[5,1],[4,1],[4,2],[3,2]],"dir":"L"},{"cells":[[6,3],[7,3],[7,2]],"dir":"D"},{"cells":[[7,7],[6,7],[6,6],[7,6]],"dir":"D"},{"cells":[[3,7],[2,7],[1,7],[1,6]],"dir":"D"},{"cells":[[0,1],[0,2],[0,3]],"dir":"U"},{"cells":[[0,6],[0,5],[1,5]],"dir":"L"},{"cells":[[6,0],[5,0],[4,0]],"dir":"U"},{"cells":[[6,2],[6,1],[7,1],[7,0]],"dir":"U"},{"cells":[[5,4],[4,4],[4,5],[3,5]],"dir":"R"},{"cells":[[5,3],[4,3],[3,3],[2,3]],"dir":"R"}]},{"level":42,"size":8,"trains":[{"cells":[[4,5],[3,5],[3,6],[3,7]],"dir":"D"},{"cells":[[1,2],[1,1],[0,1],[0,0]],"dir":"L"},{"cells":[[1,0],[2,0],[3,0],[4,0]],"dir":"L"},{"cells":[[6,1],[6,0],[5,0]],"dir":"U"},{"cells":[[0,6],[0,7],[1,7],[2,7]],"dir":"R"},{"cells":[[0,5],[0,4],[1,4]],"dir":"R"},{"cells":[[7,2],[6,2],[6,3],[7,3]],"dir":"D"},{"cells":[[7,6],[6,6],[6,5],[6,4]],"dir":"L"},{"cells":[[0,3],[1,3],[2,3],[2,4]],"dir":"R"},{"cells":[[4,1],[3,1],[2,1]],"dir":"R"}]},{"level":43,"size":8,"trains":[{"cells":[[3,1],[3,0],[2,0]],"dir":"L"},{"cells":[[2,7],[1,7],[0,7]],"dir":"R"},{"cells":[[7,6],[7,7],[6,7]],"dir":"R"},{"cells":[[3,2],[3,3],[2,3],[1,3]],"dir":"U"},{"cells":[[2,5],[1,5],[1,6]],"dir":"D"},{"cells":[[5,2],[5,3],[6,3],[6,2]],"dir":"L"},{"cells":[[0,6],[0,5],[0,4],[1,4]],"dir":"R"},{"cells":[[2,1],[1,1],[1,0]],"dir":"U"},{"cells":[[0,1],[0,2],[1,2]],"dir":"R"},{"cells":[[6,4],[5,4],[4,4],[4,3]],"dir":"L"},{"cells":[[7,0],[7,1],[7,2]],"dir":"U"}]},{"level":44,"size":8,"trains":[{"cells":[[1,5],[2,5],[2,6]],"dir":"U"},{"cells":[[4,0],[5,0],[6,0],[7,0]],"dir":"L"},{"cells":[[4,1],[5,1],[5,2],[6,2]],"dir":"L"},{"cells":[[3,1],[2,1],[1,1]],"dir":"L"},{"cells":[[2,7],[1,7],[0,7]],"dir":"R"},{"cells":[[5,3],[5,4],[6,4]],"dir":"L"},{"cells":[[5,6],[6,6],[6,5],[7,5]],"dir":"D"},{"cells":[[4,3],[4,2],[3,2],[2,2]],"dir":"R"},{"cells":[[7,4],[7,3],[7,2],[7,1]],"dir":"L"},{"cells":[[3,5],[4,5],[4,6],[3,6]],"dir":"U"},{"cells":[[0,2],[1,2],[1,3],[1,4]],"dir":"U"}]},{"level":45,"size":8,"trains":[{"cells":[[5,0],[4,0],[3,0]],"dir":"L"},{"cells":[[4,2],[4,1],[3,1]],"dir":"L"},{"cells":[[7,3],[7,4],[7,5]],"dir":"R"},{"cells":[[7,1],[7,2],[6,2],[6,1]],"dir":"L"},{"cells":[[0,1],[0,0],[1,0],[2,0]],"dir":"L"},{"cells":[[4,5],[4,6],[4,7],[5,7]],"dir":"D"},{"cells":[[0,4],[0,3],[0,2]],"dir":"L"},{"cells":[[1,5],[0,5],[0,6],[0,7]],"dir":"R"},{"cells":[[3,6],[2,6],[2,7],[1,7]],"dir":"R"},{"cells":[[2,3],[2,2],[1,2]],"dir":"L"},{"cells":[[5,3],[5,4],[5,5]],"dir":"U"},{"cells":[[5,6],[6,6],[6,5],[6,4]],"dir":"U"}]},{"level":46,"size":8,"trains":[{"cells":[[6,2],[6,1],[6,0]],"dir":"D"},{"cells":[[5,3],[4,3],[3,3],[3,2]],"dir":"L"},{"cells":[[4,5],[4,6],[3,6]],"dir":"L"},{"cells":[[5,7],[4,7],[3,7]],"dir":"R"},{"cells":[[1,1],[0,1],[0,2]],"dir":"U"},{"cells":[[4,1],[5,1],[5,0]],"dir":"L"},{"cells":[[7,1],[7,2],[7,3],[7,4]],"dir":"D"},{"cells":[[0,4],[0,5],[0,6]],"dir":"R"},{"cells":[[2,1],[2,0],[1,0]],"dir":"L"},{"cells":[[1,6],[2,6],[2,7]],"dir":"U"},{"cells":[[6,3],[6,4],[5,4]],"dir":"R"},{"cells":[[7,7],[6,7],[6,6],[6,5]],"dir":"L"}]},{"level":47,"size":8,"trains":[{"cells":[[6,3],[6,2],[7,2]],"dir":"D"},{"cells":[[5,3],[5,4],[5,5],[5,6]],"dir":"D"},{"cells":[[5,7],[6,7],[7,7]],"dir":"R"},{"cells":[[1,7],[1,6],[0,6]],"dir":"U"},{"cells":[[0,0],[1,0],[2,0],[3,0]],"dir":"L"},{"cells":[[4,4],[4,5],[3,5]],"dir":"U"},{"cells":[[3,1],[2,1],[2,2],[1,2]],"dir":"R"},{"cells":[[6,5],[6,4],[7,4]],"dir":"D"},{"cells":[[0,1],[0,2],[0,3]],"dir":"R"},{"cells":[[5,0],[5,1],[5,2],[4,2]],"dir":"L"},{"cells":[[7,0],[6,0],[6,1],[7,1]],"dir":"R"},{"cells":[[3,4],[3,3],[2,3],[2,4]],"dir":"U"},{"cells":[[4,7],[3,7],[3,6],[2,6]],"dir":"U"}]},{"level":48,"size":8,"trains":[{"cells":[[3,7],[3,6],[3,5]],"dir":"U"},{"cells":[[2,1],[2,0],[1,0],[0,0]],"dir":"U"},{"cells":[[5,6],[6,6],[7,6],[7,7]],"dir":"R"},{"cells":[[2,2],[1,2],[1,3]],"dir":"U"},{"cells":[[2,6],[1,6],[1,7],[0,7]],"dir":"R"},{"cells":[[7,3],[7,4],[7,5]],"dir":"R"},{"cells":[[5,4],[5,5],[6,5],[6,4]],"dir":"D"},{"cells":[[7,1],[6,1],[6,2],[7,2]],"dir":"R"},{"cells":[[4,4],[3,4],[3,3],[2,3]],"dir":"L"},{"cells":[[5,0],[4,0],[3,0]],"dir":"R"},{"cells":[[4,6],[4,7],[5,7],[6,7]],"dir":"L"},{"cells":[[0,2],[0,1],[1,1]],"dir":"L"},{"cells":[[0,4],[1,4],[2,4]],"dir":"L"}]}];
+LEVELS = LEVELS.concat(ADV_LEVELS);
+var COLORS = ["#E5484D","#F76B15","#E2B33C","#46A758","#0091FF","#8E4EC6","#E93D82","#12A594","#FF8A00","#5C7CFA","#20C997","#FCC419"];
+var GLYPH = { U: "↑", D: "↓", L: "←", R: "→" };
+var DIRS = { U: [-1, 0], D: [1, 0], L: [0, -1], R: [0, 1] };
+var LS_KEY = "monroes_arrows_progress_v1";
+var progress = { done: {}, current: 1 };
+try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); if (saved.done) progress.done = saved.done; if (saved.current) progress.current = saved.current; } catch (e) {}
+function saveProgress() { try { localStorage.setItem(LS_KEY, JSON.stringify(progress)); } catch (e) {} }
+/* Gentle synthesized sounds: original sine tones only, no audio files. */
+var soundOn = true;
+var audioCtx = null;
+function tone(freq, dur, type, vol, delay, slideTo) {
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    var t0 = audioCtx.currentTime + (delay || 0);
+    var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type || "sine"; osc.frequency.setValueAtTime(freq, t0);
+    if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(vol || 0.12, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  } catch (e) {}
+}
+function playSlide() { tone(520, 0.28, "sine", 0.12, 0, 880); }
+function playBlocked() { tone(170, 0.22, "sine", 0.12, 0, 130); }
+function playWin() { [523, 659, 784].forEach(function (f, i) { tone(f, 0.32, "sine", 0.12, i * 0.13); }); }
+function syncSoundLabels() {
+  var label = soundOn ? "Sound: On" : "Sound: Off";
+  ["soundBtn", "soundBtnHome"].forEach(function (id) { var b = document.getElementById(id); if (b) b.textContent = label; });
+}
+function toggleSound() { soundOn = !soundOn; syncSoundLabels(); if (soundOn) playSlide(); }
+
+
+var levelIndex = 0, arrows = [], undoStack = [], busy = false;
+function $(id) { return document.getElementById(id); }
+
+function rayClear(list, i, n) {
+  var a = list[i], d = DIRS[a.d], r = a.r + d[0], c = a.c + d[1];
+  while (r >= 0 && r < n && c >= 0 && c < n) {
+    for (var j = 0; j < list.length; j++) { if (j !== i && list[j].r === r && list[j].c === c) return false; }
+    r += d[0]; c += d[1];
+  }
+  return true;
+}
+function solveFirstMove(list, n) {
+  // DFS for one full clearing order; returns the first arrow id of that order, or null
+  var seen = {};
+  function key(l) { return l.map(function (a) { return a.r + "," + a.c + a.d; }).sort().join("|"); }
+  function dfs(l) {
+    if (l.length === 0) return [];
+    var k = key(l); if (seen[k]) return null; seen[k] = true;
+    for (var i = 0; i < l.length; i++) {
+      if (!rayClear(l, i, n)) continue;
+      var rest = l.filter(function (_, j) { return j !== i; });
+      var sub = dfs(rest);
+      if (sub) return [l[i].id].concat(sub);
+    }
+    return null;
+  }
+  var order = dfs(list);
+  return order ? order[0] : null;
+}
+
+function showHome() {
+  $("homeScreen").style.display = "block";
+  $("playScreen").style.display = "none";
+  $("winOverlay").classList.remove("open");
+  function gridHTML(list) {
+    return list.map(function (lv, i) {
+      var idx = LEVELS.indexOf(lv);
+      var done = progress.done[lv.level];
+      var label = lv.level > 24 ? ("A" + (lv.level - 24)) : ("" + lv.level);
+      return '<button class="levelbtn' + (done ? ' done' : '') + '" data-level="' + idx + '" type="button">' + label +
+        '<span class="stars">' + (done ? "★★★" : "☆☆☆") + '</span></button>';
+    }).join("");
+  }
+  function bindGrid(el) {
+    el.querySelectorAll("[data-level]").forEach(function (b) {
+      b.addEventListener("click", function () { startLevel(parseInt(b.getAttribute("data-level"), 10)); });
+    });
+  }
+  $("levelGrid").innerHTML = gridHTML(LEVELS.filter(function (lv) { return lv.level <= 24; }));
+  $("advGrid").innerHTML = gridHTML(LEVELS.filter(function (lv) { return lv.level > 24; }));
+  bindGrid($("levelGrid")); bindGrid($("advGrid"));
+}
+var advTrains = [], advHistory = [];
+function isAdvLevel() { return !!LEVELS[levelIndex].trains; }
+function startLevel(i) {
+  levelIndex = i;
+  var lv = LEVELS[i];
+  if (lv.trains) {
+    advTrains = lv.trains.map(function (t, j) { return { id: j, cells: t.cells.map(function (c) { return [c[0], c[1]]; }), dir: t.dir, color: COLORS[j % COLORS.length] }; });
+    advHistory = [];
+  } else {
+    arrows = lv.arrows.map(function (a, j) { return { id: j, r: a.r, c: a.c, d: a.d, color: COLORS[j % COLORS.length] }; });
+    undoStack = [];
+  }
+  progress.current = lv.level; saveProgress();
+  $("homeScreen").style.display = "none";
+  $("playScreen").style.display = "block";
+  $("winOverlay").classList.remove("open");
+  $("levelTitle").textContent = (lv.level > 24 ? ("Advanced " + (lv.level - 24)) : ("Level " + lv.level)) + "  ·  " + lv.size + " × " + lv.size;
+  $("msg").textContent = "";
+  if (lv.trains) renderAdvBoard(); else renderBoard();
+}
+function renderBoard() {
+  var lv = LEVELS[levelIndex], n = lv.size;
+  var board = $("board");
+  board.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
+  var cells = [];
+  for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) cells.push(null);
+  arrows.forEach(function (a) { cells[a.r * n + a.c] = a; });
+  board.innerHTML = cells.map(function (a) {
+    if (!a) return '<div class="cell"></div>';
+    return '<div class="cell"><button class="arrow" data-id="' + a.id + '" style="background:' + a.color + '" aria-label="Arrow pointing ' +
+      ({ U: "up", D: "down", L: "left", R: "right" })[a.d] + '" type="button">' + GLYPH[a.d] + '</button></div>';
+  }).join("");
+  board.querySelectorAll(".arrow").forEach(function (b) {
+    b.addEventListener("click", function () { tapArrow(parseInt(b.getAttribute("data-id"), 10), b); });
+  });
+}
+function tapArrow(id, btn) {
+  if (busy) return;
+  var lv = LEVELS[levelIndex], n = lv.size;
+  var i = -1;
+  for (var k = 0; k < arrows.length; k++) if (arrows[k].id === id) i = k;
+  if (i < 0) return;
+  if (!rayClear(arrows, i, n)) {
+    btn.classList.remove("wiggle"); void btn.offsetWidth; btn.classList.add("wiggle");
+    /* Teach the rule by showing it: light the ray red up to the blocker. */
+    (function () {
+      var a = arrows[i], d = DIRS[a.d], cells = $("board").children, hit = [];
+      var r = a.r + d[0], c = a.c + d[1];
+      while (r >= 0 && r < n && c >= 0 && c < n) {
+        var cell = cells[r * n + c], blocked = false;
+        for (var j = 0; j < arrows.length; j++) if (arrows[j].r === r && arrows[j].c === c) blocked = true;
+        cell.classList.add("path-hit"); hit.push(cell);
+        if (blocked) { cell.classList.add("path-blocker"); break; }
+        r += d[0]; c += d[1];
+      }
+      setTimeout(function () { hit.forEach(function (el) { el.classList.remove("path-hit", "path-blocker"); }); }, 1400);
+    })();
+    $("msg").textContent = "That one is stuck! The red path shows what is in the way. Try clearing that arrow first.";
+    playBlocked();
+    return;
+  }
+  busy = true;
+  undoStack.push(JSON.parse(JSON.stringify(arrows)));
+  $("msg").textContent = "";
+  btn.classList.add("fly-" + arrows[i].d);
+  playSlide();
+  var removed = arrows[i];
+  setTimeout(function () {
+    arrows = arrows.filter(function (a) { return a.id !== removed.id; });
+    busy = false;
+    if (arrows.length === 0) { winLevel(); return; }
+    renderBoard();
+  }, 460);
+}
+
+/* ============ Advanced mode: thin trains (original-style arrows) ============ */
+function advOccupied() {
+  var occ = {};
+  advTrains.forEach(function (t) { t.cells.forEach(function (c) { occ[c[0] + "," + c[1]] = true; }); });
+  return occ;
+}
+function advHeadRayClear(t, occ) {
+  var head = t.cells[t.cells.length - 1], d = DIRS[t.dir], n = LEVELS[levelIndex].size;
+  var r = head[0] + d[0], c = head[1] + d[1];
+  while (r >= 0 && r < n && c >= 0 && c < n) {
+    if (occ[r + "," + c]) return false;
+    r += d[0]; c += d[1];
+  }
+  return true;
+}
+function advBarStyle(from, to, color) {
+  // thin bar from cell center toward a neighboring cell
+  var dr = to[0] - from[0], dc = to[1] - from[1], s = "background:" + color + ";";
+  if (dc === 1) return s + "left:50%;top:50%;width:50%;height:26%;transform:translateY(-50%);";
+  if (dc === -1) return s + "right:50%;top:50%;width:50%;height:26%;transform:translateY(-50%);";
+  if (dr === 1) return s + "top:50%;left:50%;height:50%;width:26%;transform:translateX(-50%);";
+  return s + "bottom:50%;left:50%;height:50%;width:26%;transform:translateX(-50%);";
+}
+function renderAdvBoard() {
+  var lv = LEVELS[levelIndex], n = lv.size, board = $("board");
+  board.style.gridTemplateColumns = "repeat(" + n + ", 1fr)";
+  var cells = [];
+  for (var i = 0; i < n * n; i++) cells.push(null);
+  advTrains.forEach(function (t) { t.cells.forEach(function (c, k) { cells[c[0] * n + c[1]] = { t: t, k: k }; }); });
+  board.innerHTML = cells.map(function (entry) {
+    if (!entry) return '<div class="cell"></div>';
+    var t = entry.t, k = entry.k, isHead = k === t.cells.length - 1, bars = "";
+    if (k > 0) bars += '<span class="segbar" style="' + advBarStyle(t.cells[k], t.cells[k - 1], t.color) + '"></span>';
+    if (k < t.cells.length - 1) bars += '<span class="segbar" style="' + advBarStyle(t.cells[k], t.cells[k + 1], t.color) + '"></span>';
+    return '<div class="cell"><button class="trainseg' + (isHead ? ' trainhead' : '') + '" data-train="' + t.id + '" aria-label="Train pointing ' +
+      ({ U: "up", D: "down", L: "left", R: "right" })[t.dir] + '" type="button">' + bars +
+      '<span class="segdot" style="background:' + t.color + '">' + (isHead ? '<span class="headglyph">' + GLYPH[t.dir] + '</span>' : '') + '</span></button></div>';
+  }).join("");
+  board.querySelectorAll(".trainseg").forEach(function (b) {
+    b.addEventListener("click", function () { tapTrain(parseInt(b.getAttribute("data-train"), 10)); });
+  });
+}
+function tapTrain(id) {
+  if (busy) return;
+  var lv = LEVELS[levelIndex], n = lv.size, t = null;
+  for (var k = 0; k < advTrains.length; k++) if (advTrains[k].id === id) t = advTrains[k];
+  if (!t) return;
+  var occ = advOccupied();
+  if (!advHeadRayClear(t, occ)) {
+    var headBtn = document.querySelector('.trainseg.trainhead[data-train="' + id + '"]');
+    if (headBtn) { headBtn.classList.remove("wiggle"); void headBtn.offsetWidth; headBtn.classList.add("wiggle"); }
+    (function () {
+      var head = t.cells[t.cells.length - 1], d = DIRS[t.dir], cells = $("board").children, hit = [];
+      var r = head[0] + d[0], c = head[1] + d[1];
+      while (r >= 0 && r < n && c >= 0 && c < n) {
+        var cell = cells[r * n + c], blocked = !!occ[r + "," + c];
+        cell.classList.add("path-hit"); hit.push(cell);
+        if (blocked) { cell.classList.add("path-blocker"); break; }
+        r += d[0]; c += d[1];
+      }
+      setTimeout(function () { hit.forEach(function (el) { el.classList.remove("path-hit", "path-blocker"); }); }, 1400);
+    })();
+    $("msg").textContent = "That train is stuck! The red path shows what is in the way. Try clearing that train first.";
+    playBlocked();
+    return;
+  }
+  busy = true;
+  advHistory.push(JSON.parse(JSON.stringify(advTrains)));
+  $("msg").textContent = "";
+  document.querySelectorAll('.trainseg[data-train="' + id + '"]').forEach(function (b) { b.classList.add("fly-" + t.dir); });
+  playSlide();
+  setTimeout(function () {
+    advTrains = advTrains.filter(function (x) { return x.id !== id; });
+    busy = false;
+    if (advTrains.length === 0) { winLevel(); return; }
+    renderAdvBoard();
+  }, 460);
+}
+function advSolveFirstMove() {
+  var n = LEVELS[levelIndex].size, seen = {};
+  function key(ts) { return ts.map(function (t) { return t.cells.map(function (c) { return c.join(","); }).join(";") + ":" + t.dir; }).sort().join("|"); }
+  function occOf(ts) { var o = {}; ts.forEach(function (t) { t.cells.forEach(function (c) { o[c[0] + "," + c[1]] = true; }); }); return o; }
+  function clear(ts, t) {
+    var head = t.cells[t.cells.length - 1], d = DIRS[t.dir], o = occOf(ts);
+    var r = head[0] + d[0], c = head[1] + d[1];
+    while (r >= 0 && r < n && c >= 0 && c < n) { if (o[r + "," + c]) return false; r += d[0]; c += d[1]; }
+    return true;
+  }
+  function dfs(ts) {
+    if (!ts.length) return [];
+    var k = key(ts); if (seen[k]) return null; seen[k] = true;
+    for (var i = 0; i < ts.length; i++) {
+      if (!clear(ts, ts[i])) continue;
+      var sub = dfs(ts.filter(function (_, j) { return j !== i; }));
+      if (sub) return [ts[i].id].concat(sub);
+    }
+    return null;
+  }
+  var order = dfs(advTrains);
+  return order ? order[0] : null;
+}
+
+function winLevel() {
+  playWin();
+  var lv = LEVELS[levelIndex];
+  progress.done[lv.level] = true; saveProgress();
+  $("board").innerHTML = "";
+  $("msg").textContent = "";
+  $("winOverlay").classList.add("open");
+  $("nextBtn").textContent = levelIndex + 1 < LEVELS.length ? "Next Level" : "All Levels";
+  for (var i = 0; i < 24; i++) {
+    (function () {
+      var s = document.createElement("span");
+      s.className = "confetti"; s.textContent = "★";
+      s.style.left = (Math.random() * 96) + "vw";
+      s.style.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      s.style.animationDelay = (Math.random() * 0.8) + "s";
+      document.body.appendChild(s);
+      setTimeout(function () { s.remove(); }, 3600);
+    })();
+  }
+}
+$("hintBtn").addEventListener("click", function () {
+  if (isAdvLevel()) {
+    if (busy || advTrains.length === 0) return;
+    var first = advSolveFirstMove();
+    if (first === null || first === undefined) { $("msg").textContent = "Hmm — try Undo and a different order!"; return; }
+    var btn = document.querySelector('.trainseg.trainhead[data-train="' + first + '"]');
+    if (btn) { btn.classList.remove("hint-pulse"); void btn.offsetWidth; btn.classList.add("hint-pulse"); }
+    $("msg").textContent = "Try this train — its head has a clear path!";
+    return;
+  }
+  if (busy || arrows.length === 0) return;
+  var first = solveFirstMove(arrows, LEVELS[levelIndex].size);
+  if (first === null || first === undefined) { $("msg").textContent = "Hmm — try Undo and a different order!"; return; }
+  var btn = document.querySelector('[data-id="' + first + '"]');
+  if (btn) { btn.classList.remove("hint-pulse"); void btn.offsetWidth; btn.classList.add("hint-pulse"); }
+  $("msg").textContent = "Try this one — it has a clear path!";
+});
+$("undoBtn").addEventListener("click", function () {
+  if (isAdvLevel()) {
+    if (busy || advHistory.length === 0) return;
+    advTrains = advHistory.pop();
+    $("msg").textContent = "";
+    renderAdvBoard();
+    return;
+  }
+  if (busy || undoStack.length === 0) return;
+  arrows = undoStack.pop();
+  $("msg").textContent = "";
+  renderBoard();
+});
+$("restartBtn").addEventListener("click", function () { if (!busy) startLevel(levelIndex); });
+$("backBtn").addEventListener("click", showHome);
+$("nextBtn").addEventListener("click", function () {
+  if (levelIndex + 1 < LEVELS.length) startLevel(levelIndex + 1); else showHome();
+});
+$("allBtn").addEventListener("click", showHome);
+var _sb = $("soundBtn"); if (_sb) _sb.addEventListener("click", toggleSound);
+var _sbh = $("soundBtnHome"); if (_sbh) _sbh.addEventListener("click", toggleSound);
+showHome();
+syncSoundLabels();
+</script>
+</body>
+</html>

@@ -8,12 +8,13 @@
     <title>Benjamin's Battleship</title>
     <style>
       :root {
-        --bg: #ffffff;
+        --bg: #FFF9EC;
         --panel: #ffffff;
-        --panel-edge: #d3d6da;
-        --ink: #1a1a1b;
-        --ink-soft: #44464a;
-        --ink-faint: #787c7e;
+        --panel-edge: #e5dcc3;
+        --ink: #22201A;
+        --ink-soft: #44413a;
+        --ink-faint: #78705e;
+        --navy: #1E3A5F;
         --green: #538d4e;
         --yellow: #c9b458;
         --gray: #787c7e;
@@ -34,27 +35,18 @@
         --seg-bg: #f4f4f4;
         color-scheme: light;
       }
+      /* Brand shell is cream on purpose, in every color scheme, so the
+         hub pages match. No dark-mode override. */
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #121213;
-          --panel: #121213;
-          --panel-edge: #3a3a3c;
-          --ink: #f8f8f8;
-          --ink-soft: #d6d6d6;
-          --ink-faint: #818384;
-          --good-bg: #1d2b1b;
-          --bad-bg: #331d19;
-          --bad: #ff9a85;
-          --tile: #121213;
-          --tile-edge: #3a3a3c;
-          --miss-bg: #1d1d1f;
-          --miss-dot: #565f6e;
-          --target-bg: #3a3520;
-          --sunk-bg: #000000;
-          --toast-bg: #f8f8f8;
-          --toast-ink: #121213;
-          --seg-bg: #1a1a1b;
-          color-scheme: dark;
+          --bg: #FFF9EC;
+          --panel: #ffffff;
+          --panel-edge: #e5dcc3;
+          --ink: #22201A;
+          --ink-soft: #44413a;
+          --ink-faint: #78705e;
+          --navy: #1E3A5F;
+          color-scheme: light;
         }
       }
 
@@ -79,6 +71,21 @@
                  calc(18px + env(safe-area-inset-left, 0px));
       }
 
+      /* ---------- Shared hub top bar ---------- */
+      .topbar {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        align-items: center; justify-content: space-between;
+        padding-bottom: 14px; margin-bottom: 6px;
+      }
+      .topbar .hub-name { font-weight: 800; font-size: 17px; color: var(--ink); }
+      .topbar a {
+        display: inline-flex; align-items: center; min-height: 52px;
+        padding: 14px 20px; border-radius: 12px;
+        color: var(--navy); font-weight: 800; text-decoration: none;
+      }
+      .topbar a:hover { text-decoration: underline; }
+      .topbar a:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+
       /* ---------- Header (NYT-style: centered title, one thin rule) ---------- */
       header {
         position: relative;
@@ -90,13 +97,13 @@
       .icon-btn {
         appearance: none; cursor: pointer;
         position: absolute; top: 2px; right: 0;
-        width: 44px; height: 44px; padding: 8px;
+        width: 52px; height: 52px; padding: 8px;
         background: transparent; border: 0; border-radius: 6px;
         color: var(--ink);
         display: inline-flex; align-items: center; justify-content: center;
       }
       .icon-btn:hover { background: var(--miss-bg); }
-      .icon-btn:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+      .icon-btn:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
       .icon-btn svg { width: 24px; height: 24px; }
       .screws {
         font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
@@ -109,7 +116,7 @@
         line-height: 1.05;
         margin: 8px 0 8px;
       }
-      h1 .amp { color: var(--green); }
+      h1 .amp { color: var(--navy); }
       .tagline {
         margin: 0 auto; max-width: 52ch;
         color: var(--ink-soft); font-size: 16px; line-height: 1.45;
@@ -131,28 +138,28 @@
         appearance: none; border: 0; background: transparent; cursor: pointer;
         font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
         text-transform: uppercase; color: var(--ink-soft);
-        padding: 7px 13px; border-radius: 4px; line-height: 1;
-        min-height: 40px; display: inline-flex; align-items: center; justify-content: center;
+        padding: 14px 20px; border-radius: 12px; line-height: 1;
+        min-height: 52px; display: inline-flex; align-items: center; justify-content: center;
       }
       .seg button:hover { color: var(--ink); }
-      .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+      .seg button[aria-pressed="true"] { background: var(--navy); color: #fff; }
       .seg button:focus-visible, .btn:focus-visible, .cell:focus-visible, .ship-chip:focus-visible {
-        outline: 3px solid var(--green); outline-offset: 2px;
+        outline: 3px solid var(--navy); outline-offset: 2px;
       }
       .btn {
         appearance: none; cursor: pointer; font: inherit;
-        font-size: 12.5px; font-weight: 700; line-height: 1;
-        letter-spacing: 0.06em; text-transform: uppercase;
-        border-radius: 6px; padding: 11px 16px; min-height: 44px;
-        border: 1.5px solid var(--ink); background: var(--panel); color: var(--ink);
+        font-size: 14px; font-weight: 700; line-height: 1;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        border-radius: 12px; padding: 14px 20px; min-height: 52px;
+        border: 1.5px solid var(--navy); background: var(--panel); color: var(--navy);
         display: inline-flex; align-items: center; justify-content: center; gap: 7px;
       }
       .btn:active { transform: translateY(1px); }
-      .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
-      .btn.good { background: var(--green); border-color: var(--green); color: #fff; }
+      .btn.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+      .btn.good { background: var(--navy); border-color: var(--navy); color: #fff; }
       .btn.random {
-        background: var(--green); border-color: var(--green); color: #fff;
-        font-size: 14px; padding: 14px 22px; flex: 1 1 100%;
+        background: var(--navy); border-color: var(--navy); color: #fff;
+        font-size: 14px; padding: 14px 20px; flex: 1 1 100%;
       }
       .btn[aria-pressed="true"] { background: var(--yellow); border-color: var(--yellow); color: #1a1a1b; }
       .btn:disabled { opacity: 0.4; cursor: default; }
@@ -164,7 +171,7 @@
       .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
       .stat {
         background: var(--panel); border: 1px solid var(--panel-edge);
-        border-radius: 6px; padding: 9px 6px 8px; text-align: center;
+        border-radius: 16px; padding: 9px 6px 8px; text-align: center;
       }
       .stat .v { font-size: 22px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
       .stat .k {
@@ -194,11 +201,11 @@
       .message.good-flash .dot { background: var(--green); }
       #fireBtn { padding: 13px 16px; font-size: 13.5px; }
       .log {
-        border: 1px solid var(--panel-edge); border-radius: 8px;
+        border: 1px solid var(--panel-edge); border-radius: 16px;
         background: var(--panel); margin-bottom: 16px;
       }
       .log summary {
-        cursor: pointer; padding: 11px 16px; min-height: 44px;
+        cursor: pointer; padding: 14px 20px; min-height: 52px;
         display: flex; align-items: center; gap: 6px;
         font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
       }
@@ -212,7 +219,7 @@
       /* ---------- Placement tray ---------- */
       .tray {
         background: var(--panel); border: 1px solid var(--panel-edge);
-        border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;
+        border-radius: 16px; padding: 16px 18px; margin-bottom: 16px;
       }
       .tray h2 {
         font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
@@ -225,7 +232,7 @@
         appearance: none; cursor: grab; font: inherit;
         display: inline-flex; align-items: center; gap: 8px;
         border: 1.5px solid var(--panel-edge); background: var(--panel);
-        border-radius: 6px; padding: 8px 13px; min-height: 44px;
+        border-radius: 12px; padding: 14px 20px; min-height: 52px;
         font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em;
         text-transform: uppercase; color: var(--ink);
         touch-action: none; user-select: none; -webkit-user-select: none;
@@ -248,7 +255,7 @@
       .board-frame {
         background: var(--panel);
         border: 1px solid var(--panel-edge);
-        border-radius: 8px;
+        border-radius: 16px;
         padding: clamp(12px, 3vw, 20px);
       }
       .board-top {
@@ -312,8 +319,12 @@
         border-color: var(--yellow); background: var(--target-bg);
         box-shadow: 0 0 0 3px var(--yellow);
       }
-      .cell.just-fired { animation: firedPulse 0.55s ease-out; }
-      @keyframes firedPulse { 0% { transform: scale(1.3); } 100% { transform: scale(1); } }
+      .cell.just-fired { animation: firedPulse 0.35s ease-out; }
+      @keyframes firedPulse { 0% { transform: scale(1.18); } 100% { transform: scale(1); } }
+      .cell.just-fired.hit, .cell.just-fired.sunk { animation: hitPulse 0.35s ease-out; }
+      @keyframes hitPulse { 0% { transform: scale(1.22); box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.55); } 100% { transform: scale(1); box-shadow: none; } }
+      .cell.just-fired.miss { animation: missPulse 0.35s ease-out; }
+      @keyframes missPulse { 0% { transform: scale(0.88); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
       .cell.sonar { animation: sonarPulse 0.9s ease-in-out infinite; }
       @keyframes sonarPulse {
         0%, 100% { box-shadow: 0 0 0 3px var(--yellow); }
@@ -325,7 +336,7 @@
       .fleet-status { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px; }
       .fleet-card {
         background: var(--panel); border: 1px solid var(--panel-edge);
-        border-radius: 8px; padding: 13px 16px;
+        border-radius: 16px; padding: 13px 16px;
       }
       .fleet-card h3 {
         margin: 0 0 4px; font-size: 11.5px; letter-spacing: 0.15em;
@@ -374,7 +385,7 @@
       }
 
       /* ---------- End banner ---------- */
-      .endbox { display: none; margin-top: 18px; border-radius: 8px; padding: 18px 20px; text-align: center; }
+      .endbox { display: none; margin-top: 18px; border-radius: 16px; padding: 18px 20px; text-align: center; }
       .endbox.show { display: block; }
       .endbox.won { background: var(--good-bg); border: 1.5px solid var(--green); }
       .endbox.lost { background: var(--bad-bg); border: 1.5px solid var(--bad); }
@@ -391,7 +402,7 @@
       .howto {
         margin-top: 30px;
         background: var(--panel); border: 1px solid var(--panel-edge);
-        border-radius: 8px; padding: 20px 22px;
+        border-radius: 16px; padding: 20px 22px;
       }
       .howto h2 {
         font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase;
@@ -419,7 +430,7 @@
       .modal {
         position: relative; width: 100%; max-width: 520px;
         background: var(--bg); color: var(--ink);
-        border-radius: 8px; padding: 30px 30px 26px;
+        border-radius: 16px; padding: 30px 30px 26px;
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
         animation: modalIn 0.22s ease-out;
       }
@@ -427,12 +438,12 @@
       .modal-close {
         appearance: none; cursor: pointer;
         position: absolute; top: 10px; right: 10px;
-        width: 44px; height: 44px; padding: 8px;
-        background: transparent; border: 0; border-radius: 6px; color: var(--ink);
+        width: 52px; height: 52px; padding: 8px;
+        background: transparent; border: 0; border-radius: 12px; color: var(--ink);
         display: inline-flex; align-items: center; justify-content: center;
       }
       .modal-close:hover { background: var(--miss-bg); }
-      .modal-close:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+      .modal-close:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
       .modal-close svg { width: 20px; height: 20px; }
       .modal h2 {
         margin: 0 0 18px; text-align: center;
@@ -466,7 +477,7 @@
       .badges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
       .badge {
         display: flex; gap: 11px; align-items: flex-start;
-        border: 1px solid var(--panel-edge); border-radius: 8px; padding: 12px;
+        border: 1px solid var(--panel-edge); border-radius: 16px; padding: 12px;
       }
       .badge-medal {
         width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
@@ -545,6 +556,7 @@
            scrolling away. Order is set on every direct child so nothing
            else moves. */
         .wrap { display: flex; flex-direction: column; }
+        .wrap > .topbar { order: -1; }
         .wrap > header { order: 0; }
         .wrap > .controls { order: 1; }
         .wrap > .stats { order: 2; }
@@ -603,7 +615,7 @@
         .tray-actions .btn.random { grid-column: 1 / -1; min-height: 52px; }
         .tray-actions #startBtn { grid-column: 1 / -1; min-height: 52px; }
 
-        .seg button { min-height: 44px; }
+        .seg button { min-height: 52px; }
         #fireBtn { min-height: 52px; }
       }
       @media (max-width: 520px) {
@@ -658,6 +670,10 @@
   </head>
   <body data-phase="placement">
     <div class="wrap">
+      <nav class="topbar" aria-label="Game hub">
+        <span class="hub-name">No 13th Floor Games</span>
+        <a href="index.html">Back to all games</a>
+      </nav>
       <header>
         <div class="screws">A sea battle</div>
         <h1>Benjamin&rsquo;s <span class="amp">Battleship</span></h1>
@@ -781,7 +797,7 @@
         <p class="tip"><strong>Captain&rsquo;s tips:</strong> ships can&rsquo;t bend, so once you score a hit, work the squares around it in a line. Stuck? A sonar ping (two per battle) outlines one square in yellow that definitely holds an enemy ship. On Smart, the computer hunts the same way — spread your ships out.</p>
       </section>
 
-      <footer>Benjamin&rsquo;s Battleship — a sea battle. Statistics and badges are saved on this device only.</footer>
+      <footer>Saved on your device only. No accounts, no ads.</footer>
     </div>
 
     <div class="modal-overlay" id="statsModal" hidden>
@@ -936,7 +952,7 @@
           return { fleet: fleet, occ: occ };
         }
 
-        /* ---------------- Sound (tiny WebAudio, same recipe as Buttons) ---------------- */
+        /* ---------------- Sound (tiny WebAudio) ---------------- */
         var audioCtx = null;
         function tone(freq, dur, type, vol, when) {
           if (!soundOn) return;
@@ -1520,24 +1536,44 @@
           return out;
         }
 
-        function aiPick() {
-          var candidates = aiCandidates();
-          if (!candidates.length) return -1;
-          if (difficulty === "easy") {
-            return candidates[Math.floor(Math.random() * candidates.length)];
-          }
-          // Find unsunk hits on the player board.
-          var unsunkHits = [];
+        /* Shared AI helpers (original code, no outside assets or rules). */
+        function aiUnsunkHits() {
+          var out = [];
           SHIPS.forEach(function (s) {
             var ship = playerShips[s.id];
             if (!shipSunk(ship)) {
-              ship.cells.forEach(function (c) { if (enemyShots[c] === "hit") unsunkHits.push(c); });
+              ship.cells.forEach(function (c) { if (enemyShots[c] === "hit") out.push(c); });
             }
           });
+          return out;
+        }
+        function aiRemainingSizes() {
+          var out = [];
+          SHIPS.forEach(function (s) {
+            if (!shipSunk(playerShips[s.id])) out.push(s.size);
+          });
+          return out;
+        }
+        /* A cell blocks a fresh ship placement when it is a known miss, or a
+           hit on an already sunk ship (that square belongs to a dead ship). */
+        function aiBlocked(idx) {
+          if (enemyShots[idx] === "miss") return true;
+          if (enemyShots[idx] === "hit") {
+            var id = playerOcc[idx];
+            return !!id && shipSunk(playerShips[id]);
+          }
+          return false;
+        }
+        function aiPickRandom(list) {
+          return list[Math.floor(Math.random() * list.length)];
+        }
+        /* Normal: the simple hunt/target it always had. Adjacent squares
+           around an unsunk hit, line ends first when two hits line up,
+           otherwise any unshot square. No density scoring, no parity. */
+        function aiNormalPick(candidates, unsunkHits) {
           if (unsunkHits.length) {
             var targets = {};
-            // Smart: extend a line when two hits share a row or column.
-            if (difficulty === "smart" && unsunkHits.length > 1) {
+            if (unsunkHits.length > 1) {
               var byRow = {}, byCol = {};
               unsunkHits.forEach(function (h) {
                 (byRow[rowOf(h)] = byRow[rowOf(h)] || []).push(h);
@@ -1572,14 +1608,98 @@
               });
             }
             var tList = Object.keys(targets).map(Number);
-            if (tList.length) return tList[Math.floor(Math.random() * tList.length)];
+            if (tList.length) return aiPickRandom(tList);
           }
-          // Hunting: Smart uses a checkerboard pattern (every ship covers both colours).
-          if (difficulty === "smart") {
+          return aiPickRandom(candidates);
+        }
+        /* Smart: probability-density engine.
+           Score every square by how many legal placements of the ships
+           still afloat cover it. A placement is legal only if it covers
+           no blocked square. In target mode (unsunk hits exist) it must
+           also cover at least one unsunk hit, so scoring follows the
+           hits and keeps running down a line. In hunt mode (no unsunk
+           hits) only checkerboard squares are scored, because every
+           remaining ship is at least 2 long and so covers both colours.
+           Ties are broken at random. Only unshot squares can ever score,
+           so a shot is never repeated. */
+        function aiSmartPick(candidates) {
+          var unsunkHits = aiUnsunkHits();
+          var sizes = aiRemainingSizes();
+          if (!sizes.length) return -1;
+          var hitSet = {};
+          unsunkHits.forEach(function (h) { hitSet[h] = true; });
+          var scores = new Array(N * N).fill(0);
+          sizes.forEach(function (size) {
+            for (var r = 0; r < N; r++) {
+              for (var c = 0; c < N; c++) {
+                var horiz = [], vert = [], okH = true, okV = true, hitH = false, hitV = false;
+                for (var i = 0; i < size; i++) {
+                  var hi = r * N + (c + i);
+                  var vi = (r + i) * N + c;
+                  if (c + i >= N || aiBlocked(hi)) okH = false; else { horiz.push(hi); if (hitSet[hi]) hitH = true; }
+                  if (r + i >= N || aiBlocked(vi)) okV = false; else { vert.push(vi); if (hitSet[vi]) hitV = true; }
+                }
+                if (okH && (!unsunkHits.length || hitH)) horiz.forEach(function (idx) { scores[idx] += 1; });
+                if (okV && (!unsunkHits.length || hitV)) vert.forEach(function (idx) { scores[idx] += 1; });
+              }
+            }
+          });
+          /* Line continuation, on top of density: when two or more unsunk
+             hits share a row or column, the unshot squares just past each
+             end of the line get a bonus, so the engine keeps running down
+             a found ship instead of wandering to a side square. */
+          if (unsunkHits.length > 1) {
+            var byRow = {}, byCol = {};
+            unsunkHits.forEach(function (h) {
+              (byRow[rowOf(h)] = byRow[rowOf(h)] || []).push(h);
+              (byCol[colOf(h)] = byCol[colOf(h)] || []).push(h);
+            });
+            var bonus = 15;
+            Object.keys(byRow).forEach(function (r) {
+              var hs = byRow[r].sort(function (a, b) { return a - b; });
+              if (hs.length > 1) {
+                [hs[0] - 1, hs[hs.length - 1] + 1].forEach(function (c) {
+                  if (c >= 0 && c < N * N && rowOf(c) === Number(r) && !enemyShots[c]) scores[c] += bonus;
+                });
+              }
+            });
+            Object.keys(byCol).forEach(function (c) {
+              var hs = byCol[c].sort(function (a, b) { return a - b; });
+              if (hs.length > 1) {
+                [hs[0] - N, hs[hs.length - 1] + N].forEach(function (cc) {
+                  if (cc >= 0 && cc < N * N && colOf(cc) === Number(c) && !enemyShots[cc]) scores[cc] += bonus;
+                });
+              }
+            });
+          }
+          var pool = candidates;
+          if (!unsunkHits.length) {
             var parity = candidates.filter(function (i) { return (rowOf(i) + colOf(i)) % 2 === 0; });
-            if (parity.length) return parity[Math.floor(Math.random() * parity.length)];
+            if (parity.length) pool = parity;
           }
-          return candidates[Math.floor(Math.random() * candidates.length)];
+          var best = -1, bestScore = 0;
+          pool.forEach(function (idx) {
+            if (scores[idx] > bestScore) { bestScore = scores[idx]; best = idx; }
+          });
+          if (best < 0) return -1;
+          /* Random among the joint-best squares, not just the first one. */
+          var top = pool.filter(function (idx) { return scores[idx] === bestScore; });
+          return aiPickRandom(top);
+        }
+
+        function aiPick() {
+          var candidates = aiCandidates();
+          if (!candidates.length) return -1;
+          /* Easy stays pure random. */
+          if (difficulty === "easy") return aiPickRandom(candidates);
+          if (difficulty === "smart") {
+            var smart = aiSmartPick(candidates);
+            /* Fall back to the simple target/hunt only if density found
+               nothing (for example an unsunk hit boxed in by misses). */
+            if (smart >= 0) return smart;
+            return aiNormalPick(candidates, aiUnsunkHits());
+          }
+          return aiNormalPick(candidates, aiUnsunkHits());
         }
 
         function aiTurn() {
