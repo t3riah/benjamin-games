@@ -75,3 +75,24 @@ Date: Nov 2-3, 2026. Nothing was pushed to GitHub and the live site was not chan
 - The two new games were built from Gemini's skeleton code, extended into
   playable 60-second rounds; the detector timing and node dragging are new
   mechanics, not Gemini's verbatim code.
+
+## Nov 8, 2026: new Battleship + Gumdrops, mobile pass (headless, local)
+- Battleship replaced with Louie's new 8x8 click-to-strike version (4 ships,
+  12 cells). Verified at 390px: 64 cells render, no horizontal overflow,
+  clicking all cells wins (Hits 12/12, "Sector Cleared!", no alert dialog),
+  Re-Calibrate resets to Targeting Phase 0/12. Tailwind inlined, no CDN.
+  Grid cells 34px on phones (geometry-bound, same exemption as the old
+  board), 48px on desktop. Victory alert() removed; further clicks after a
+  win are ignored. Old 10x10 placement version and its stats key are gone.
+- Gumdrops replaced with Louie's new catcher version (basket + falling
+  drops). Verified at 390px: canvas 324px wide, no overflow; a forced catch
+  scored +10 and best score persisted in `gumdropsBestV1`; tap moves the
+  basket. Tailwind inlined, no CDN. Canvas scales down on narrow phones.
+  Old match-3 version and its progress are gone.
+- Quantum: particle radius 3.5 to 4.5, target zone 34 to 40px tall for phone
+  visibility. Re-verified: scores after 12s (20, then 120 on re-run).
+- Fluid: node radius 15 to 17, grab tolerance 26 to 30px. Re-verified: node
+  dragged onto the path lit (flow 20%); off-path node stayed dark.
+- Hub, Arrows, Battleship (old), Gumdrops (old) mobile sweep at 390px
+  before the replacements: no overflow anywhere; header buttons on the
+  games were already 44px+ except Monromi's (fixed in its own repo).

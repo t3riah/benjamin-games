@@ -131,7 +131,7 @@
     return Math.max(12, Math.min(H - 12, c + gauss() * 26));
   }
   function newTarget() {
-    var h = 34;
+    var h = 40;
     var y = 20 + Math.random() * (H - 40 - h);
     target = { y: y, h: h };
     targetUntil = Date.now() + 3500;
@@ -228,7 +228,7 @@
         }
       }
       ctx.fillStyle = detectorOn ? '#F59E0B' : '#C084FC';
-      ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2); ctx.fill();
     }
     // Landing flashes
     for (var j = flashes.length - 1; j >= 0; j--) {

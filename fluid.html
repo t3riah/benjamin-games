@@ -153,7 +153,7 @@
   function nodeAt(p) {
     for (var i = nodes.length - 1; i >= 0; i--) {
       var n = nodes[i];
-      if (Math.abs(p.x - n.x) < 26 && Math.abs(p.y - n.y) < 26) return i;
+      if (Math.abs(p.x - n.x) < 30 && Math.abs(p.y - n.y) < 30) return i;
     }
     return -1;
   }
@@ -209,7 +209,7 @@
         if (litCount >= NODE_XS.length) endRound(true);
       }
       ctx.beginPath();
-      ctx.arc(n.x, n.y, 15, 0, Math.PI * 2);
+      ctx.arc(n.x, n.y, 17, 0, Math.PI * 2);
       ctx.fillStyle = n.lit ? '#34D399' : '#0A0A16';
       ctx.fill();
       ctx.lineWidth = 2.5;
