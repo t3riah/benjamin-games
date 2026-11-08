@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fluid Matrix | No13thfloor Ecosystem</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #020205; color: #F3F4F6; line-height: 1.5; user-select: none; }
+  header { max-width: 720px; margin: 0 auto; padding: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #38BDF8, #34D399); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: 0.04em; color: #38BDF8; }
+  header p { font-size: 12px; color: #9CA3AF; margin: 0; }
+  .hud { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pill { padding: 6px 10px; border-radius: 999px; background: #0A0A16; border: 1px solid rgba(56, 189, 248, 0.35); font-size: 13px; font-weight: 700; font-family: ui-monospace, monospace; color: #38BDF8; }
+  .pill.green { color: #34D399; border-color: rgba(52, 211, 153, 0.35); }
+  button { min-height: 52px; padding: 12px 18px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.5); background: rgba(56, 189, 248, 0.15); color: #BAE6FD; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid #F3F4F6; outline-offset: 3px; }
+  button.small { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+  main { max-width: 720px; margin: 0 auto; padding: 8px 16px 16px; display: grid; gap: 12px; }
+  .panel { background: #0A0A16; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 16px; padding: 12px; position: relative; }
+  canvas { display: block; width: 100%; max-width: 520px; height: auto; margin: 0 auto; border-radius: 12px; background: #020205; touch-action: none; }
+  .hint { font-size: 15px; color: #C7C9D1; text-align: center; margin: 0; }
+  .overlay { position: absolute; inset: 12px; border-radius: 12px; background: rgba(2, 2, 5, 0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 20px; z-index: 5; }
+  .overlay.hidden { display: none; }
+  .overlay h2 { margin: 0; font-size: 24px; color: #38BDF8; }
+  .overlay p { margin: 0; font-size: 16px; color: #D8DAE0; max-width: 420px; }
+  .overlay .score { font-size: 18px; font-weight: 700; color: #34D399; }
+  .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  a.back { color: #38BDF8; font-weight: 700; font-size: 15px; }
+  footer { max-width: 720px; margin: 0 auto; padding: 16px; text-align: center; font-size: 14px; color: #9CA3AF; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="mark">&#128167;</div>
+    <div>
+      <h1>FLUID MATRIX</h1>
+      <p>No13thfloor Agtech Tier III</p>
+    </div>
+  </div>
+  <div class="hud">
+    <span class="pill green">Flow: <span id="hud-flow">0%</span></span>
+    <span class="pill">Time: <span id="hud-timer">60s</span></span>
+    <button id="btn-tone" class="small" type="button">Tone: 432Hz</button>
+  </div>
+</header>
+<main>
+  <div class="panel">
+    <canvas id="fluid-canvas" width="520" height="340"></canvas>
+    <div id="overlay-start" class="overlay">
+      <h2>Route the flow</h2>
+      <p>A wave flows across the matrix. Drag each sensor node up or down onto the glowing wave path before the amber flow head reaches it. Light all five before the 60 seconds run out. Tap a node to select it, then use arrow keys if you prefer.</p>
+      <button id="btn-start" type="button">Start</button>
+    </div>
+    <div id="overlay-end" class="overlay hidden">
+      <h2 id="end-title">Flow stabilized</h2>
+      <p id="end-text"></p>
+      <p class="score" id="end-score"></p>
+      <button id="btn-again" type="button">New flow</button>
+    </div>
+  </div>
+  <p class="hint">Drag a node onto the wave path before the amber flow head reaches it. Lit nodes stay lit, and the flow rate climbs.</p>
+  <div class="row">
+    <button id="btn-shuffle" type="button">Shuffle nodes</button>
+    <a class="back" href="index.html">Back to all games</a>
+  </div>
+</main>
+<footer>Saved on your device only. No accounts, no ads.</footer>
+<script>
+(function () {
+  var canvas = document.getElementById('fluid-canvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height, MID = H / 2, AMP = 46;
+  var NODE_XS = [70, 150, 240, 330, 420];
+  var TONE_KEY = 'no13thToneV1';
+  var tone = 432;
+  try { tone = parseInt(localStorage.getItem(TONE_KEY) || '432', 10) || 432; } catch (e) {}
+  var toneBtn = document.getElementById('btn-tone');
+  function renderToneBtn() { toneBtn.textContent = 'Tone: ' + tone + 'Hz'; }
+  renderToneBtn();
+  toneBtn.addEventListener('click', function () {
+    tone = (tone === 432) ? 528 : 432;
+    try { localStorage.setItem(TONE_KEY, String(tone)); } catch (e) {}
+    renderToneBtn();
+  });
+  var audioCtx = null;
+  function blip(freq) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var now = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.18);
+    } catch (e) {}
+  }
+
+  var phase = 0, headX = 0, playing = false, timeLeft = 60, litCount = 0;
+  var nodes = [], dragNode = null, selected = -1, tickTimer = null;
+  function waveY(x) { return MID + Math.sin(x * 0.02 + phase) * AMP; }
+  function shuffleNodes() {
+    phase = Math.random() * Math.PI * 2;
+    headX = 0;
+    nodes = NODE_XS.map(function (x) {
+      return { x: x, y: 50 + Math.random() * (H - 100), lit: false };
+    });
+    litCount = 0;
+    renderFlow();
+  }
+  function renderFlow() {
+    document.getElementById('hud-flow').textContent = Math.round((litCount / NODE_XS.length) * 100) + '%';
+  }
+  function endRound(won) {
+    playing = false;
+    clearInterval(tickTimer);
+    document.getElementById('end-title').textContent = won ? 'Flow stabilized' : 'Flow dropped';
+    document.getElementById('end-text').textContent = won
+      ? 'All five nodes lit with ' + timeLeft + 's to spare.'
+      : 'Time ran out with ' + litCount + ' of 5 nodes lit.';
+    document.getElementById('end-score').textContent = 'Flow rate: ' + Math.round((litCount / NODE_XS.length) * 100) + '%';
+    document.getElementById('overlay-end').classList.remove('hidden');
+  }
+  function startRound() {
+    shuffleNodes();
+    timeLeft = 60;
+    document.getElementById('hud-timer').textContent = '60s';
+    playing = true;
+    document.getElementById('overlay-start').classList.add('hidden');
+    document.getElementById('overlay-end').classList.add('hidden');
+    tickTimer = setInterval(function () {
+      if (!playing) return;
+      timeLeft--;
+      document.getElementById('hud-timer').textContent = timeLeft + 's';
+      if (timeLeft <= 0) endRound(false);
+    }, 1000);
+  }
+  document.getElementById('btn-start').addEventListener('click', startRound);
+  document.getElementById('btn-again').addEventListener('click', startRound);
+  document.getElementById('btn-shuffle').addEventListener('click', function () { shuffleNodes(); });
+
+  function canvasPos(e) {
+    var r = canvas.getBoundingClientRect();
+    var cx = (e.clientX - r.left) * (W / r.width);
+    var cy = (e.clientY - r.top) * (H / r.height);
+    return { x: cx, y: cy };
+  }
+  function nodeAt(p) {
+    for (var i = nodes.length - 1; i >= 0; i--) {
+      var n = nodes[i];
+      if (Math.abs(p.x - n.x) < 26 && Math.abs(p.y - n.y) < 26) return i;
+    }
+    return -1;
+  }
+  canvas.addEventListener('pointerdown', function (e) {
+    var p = canvasPos(e);
+    var i = nodeAt(p);
+    if (i >= 0) { dragNode = i; selected = i; canvas.setPointerCapture(e.pointerId); }
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    if (dragNode === null) return;
+    var p = canvasPos(e);
+    nodes[dragNode].y = Math.max(24, Math.min(H - 24, p.y));
+    e.preventDefault();
+  });
+  function endDrag() { dragNode = null; }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  window.addEventListener('keydown', function (e) {
+    if (selected < 0 || !nodes[selected]) return;
+    if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+      e.preventDefault();
+      nodes[selected].y = Math.max(24, Math.min(H - 24, nodes[selected].y + (e.code === 'ArrowUp' ? -10 : 10)));
+    }
+  });
+
+  function draw() {
+    if (playing) { headX += 3.4; if (headX > W + 10) headX = 0; }
+    ctx.fillStyle = '#020205';
+    ctx.fillRect(0, 0, W, H);
+    // Wave path (fixed curve for this round)
+    ctx.strokeStyle = '#38BDF8';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (var x = 0; x <= W; x += 4) {
+      var y = waveY(x);
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    // Flow head travelling along the path
+    if (playing) {
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath(); ctx.arc(headX, waveY(headX), 7, 0, Math.PI * 2); ctx.fill();
+    }
+    // Nodes
+    nodes.forEach(function (n, i) {
+      var wy = waveY(n.x);
+      if (playing && !n.lit && Math.abs(headX - n.x) < 12 && Math.abs(wy - n.y) < 16) {
+        n.lit = true;
+        litCount++;
+        renderFlow();
+        blip(tone * 2);
+        if (litCount >= NODE_XS.length) endRound(true);
+      }
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 15, 0, Math.PI * 2);
+      ctx.fillStyle = n.lit ? '#34D399' : '#0A0A16';
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = n.lit ? '#34D399' : (i === selected ? '#F59E0B' : '#38BDF8');
+      ctx.stroke();
+      ctx.fillStyle = n.lit ? '#022C22' : '#BAE6FD';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), n.x, n.y);
+    });
+    requestAnimationFrame(draw);
+  }
+  shuffleNodes();
+  draw();
+})();
+</script>
+</body>
+</html>

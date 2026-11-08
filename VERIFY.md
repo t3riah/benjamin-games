@@ -30,3 +30,48 @@ Date: Nov 2-3, 2026. Nothing was pushed to GitHub and the live site was not chan
 - Grid/board cells themselves are exempt from the 52px rule by geometry: a 10x10 Battleship grid and a 7-8 wide Arrows board cannot use 52px cells on a 360px phone without sideways scrolling. All buttons and controls meet 52px.
 - Arrows mute setting is memory-only and resets on reload; no second localStorage key was added, to avoid changing the progress schema. Persistent mute is an easy follow-up if wanted.
 - Arrows sounds and Battleship/Gumdrops feel were code-verified, not aurally or visually play-tested in a live browser.
+
+---
+
+# Verification: Threshold update (Nov 8, 2026)
+
+## What was checked
+- All six HTML files parse cleanly (Python HTML parser). Extracted JS from
+  quantum.html and fluid.html passes `node --check`. The three original game
+  files are byte-unchanged from the Nov 3 live versions (sizes verified
+  against the repo tree before pushing).
+- Hub links: index.html links to quantum.html, fluid.html, battleship.html,
+  arrows.html, gumdrops.html, and out to https://mazes.no13thfloor.org/.
+  Each new game page links back only to index.html.
+- No external URLs in quantum.html or fluid.html (no CDN, no fonts, no
+  assets). Hub external URLs are only the Monromi link and the
+  YouTube-nocookie embed of the Graph Gazer fluid-simulation Short.
+- Monromi's Mazes was NOT replaced: the Gemini "Upgraded Game 1" code is a
+  skeleton (a gold dot and a timer), far less than the live game at
+  mazes.no13thfloor.org, so the hub links to the live game instead.
+- The video was identified before embedding: "You've Seen This Your Whole
+  Life (Real Fluid Simulation) #shorts" by Graph Gazer. It is a fluid-sim
+  Short, not an overview of all three games' physics; the hub labels it
+  honestly as a real fluid simulation.
+
+## Quantum Conduit playtest (headless, local)
+- Start overlay, 60s countdown, particles emitted and travelled to the
+  right wall in both modes. Detector toggle switched arcs to bands, and
+  Space toggled it too. Score rose on target hits (10 in wave mode after
+  6s, 90 after 9s collapsed, 150 at the end). End overlay showed score
+  and best; best score 150 was stored in localStorage.
+  Tone toggle switched 432Hz to 528Hz and stored the choice.
+
+## Fluid Matrix playtest (headless, local)
+- Fixed wave path per round with a travelling flow head. Nodes dragged
+  onto the path lit when the head passed; off-path nodes stayed dark
+  (verified: a node left off-path did not light on its own). All five lit
+  ends the round with "Flow stabilized"; timeout ends it with the lit
+  count. Flow rate HUD tracked lit nodes.
+
+## Honest limits
+- Playtests were headless with scripted input, not a human on a phone.
+  Touch dragging on a real phone still wants Louie's check.
+- The two new games were built from Gemini's skeleton code, extended into
+  playable 60-second rounds; the detector timing and node dragging are new
+  mechanics, not Gemini's verbatim code.

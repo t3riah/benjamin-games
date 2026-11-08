@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Quantum Conduit | No13thfloor Ecosystem</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #020205; color: #F3F4F6; line-height: 1.5; user-select: none; }
+  header { max-width: 720px; margin: 0 auto; padding: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #A855F7, #38BDF8); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; color: #020205; }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: 0.04em; color: #C084FC; }
+  header p { font-size: 12px; color: #9CA3AF; margin: 0; }
+  .hud { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pill { padding: 6px 10px; border-radius: 999px; background: #0A0A16; border: 1px solid rgba(168, 85, 247, 0.35); font-size: 13px; font-weight: 700; font-family: ui-monospace, monospace; color: #C084FC; }
+  .pill.gold { color: #F59E0B; border-color: rgba(245, 158, 11, 0.35); }
+  button { min-height: 52px; padding: 12px 18px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.5); background: rgba(168, 85, 247, 0.2); color: #E9D5FF; font-weight: 700; font-size: 15px; font-family: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid #F3F4F6; outline-offset: 3px; }
+  button.amber { border-color: rgba(245, 158, 11, 0.6); background: rgba(245, 158, 11, 0.18); color: #FDE68A; }
+  button.small { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+  main { max-width: 720px; margin: 0 auto; padding: 8px 16px 16px; display: grid; gap: 12px; }
+  .panel { background: #0A0A16; border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; padding: 12px; position: relative; }
+  canvas { display: block; width: 100%; max-width: 520px; height: auto; margin: 0 auto; border-radius: 12px; background: #020205; touch-action: none; }
+  .hint { font-size: 15px; color: #C7C9D1; text-align: center; margin: 0; }
+  .overlay { position: absolute; inset: 12px; border-radius: 12px; background: rgba(2, 2, 5, 0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 20px; z-index: 5; }
+  .overlay.hidden { display: none; }
+  .overlay h2 { margin: 0; font-size: 24px; color: #C084FC; }
+  .overlay p { margin: 0; font-size: 16px; color: #D8DAE0; max-width: 420px; }
+  .overlay .score { font-size: 18px; font-weight: 700; color: #F59E0B; }
+  .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  a.back { color: #C084FC; font-weight: 700; font-size: 15px; }
+  footer { max-width: 720px; margin: 0 auto; padding: 16px; text-align: center; font-size: 14px; color: #9CA3AF; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="mark">&Psi;</div>
+    <div>
+      <h1>THE QUANTUM CONDUIT</h1>
+      <p>No13thfloor Symbiosis Tier II</p>
+    </div>
+  </div>
+  <div class="hud">
+    <span class="pill gold">Score: <span id="hud-score">0</span></span>
+    <span class="pill">Time: <span id="hud-timer">60s</span></span>
+    <button id="btn-tone" class="small" type="button">Tone: 432Hz</button>
+  </div>
+</header>
+<main>
+  <div class="panel">
+    <canvas id="quantum-canvas" width="520" height="340"></canvas>
+    <div id="overlay-start" class="overlay">
+      <h2>Collapse the wave</h2>
+      <p>Particles stream through the double slit. With the detector off they land in a wave pattern. Turn it on and they collapse into two narrow bands. Land particles inside the glowing target zone to score. 60 seconds.</p>
+      <button id="btn-start" type="button">Start</button>
+    </div>
+    <div id="overlay-end" class="overlay hidden">
+      <h2 id="end-title">Time</h2>
+      <p id="end-text"></p>
+      <p class="score" id="end-score"></p>
+      <button id="btn-again" type="button">Play again</button>
+    </div>
+  </div>
+  <p class="hint">Toggle the detector to match the target. Wave spreads wide, collapse hits narrow.</p>
+  <div class="row">
+    <button id="btn-detector" type="button">Detector: OFF (Wave)</button>
+    <a class="back" href="index.html">Back to all games</a>
+  </div>
+</main>
+<footer>Saved on your device only. No accounts, no ads.</footer>
+<script>
+(function () {
+  var canvas = document.getElementById('quantum-canvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var BARRIER_X = 175, SLIT1_Y = 105, SLIT2_Y = 235, SLIT_H = 34, WALL_X = W - 18;
+  var TONE_KEY = 'no13thToneV1';
+  var tone = 432;
+  try { tone = parseInt(localStorage.getItem(TONE_KEY) || '432', 10) || 432; } catch (e) {}
+  var toneBtn = document.getElementById('btn-tone');
+  function renderToneBtn() { toneBtn.textContent = 'Tone: ' + tone + 'Hz'; }
+  renderToneBtn();
+  toneBtn.addEventListener('click', function () {
+    tone = (tone === 432) ? 528 : 432;
+    try { localStorage.setItem(TONE_KEY, String(tone)); } catch (e) {}
+    renderToneBtn();
+  });
+
+  var audioCtx = null;
+  function blip(freq) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var now = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = 'sine'; osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.18);
+    } catch (e) {}
+  }
+
+  var detectorOn = false, playing = false, score = 0, timeLeft = 60;
+  var particles = [], flashes = [], target = null, targetUntil = 0;
+  var emitTimer = null, tickTimer = null, t = 0;
+  var best = 0;
+  try { best = parseInt(localStorage.getItem('quantumConduitBestV1') || '0', 10) || 0; } catch (e) {}
+
+  var detBtn = document.getElementById('btn-detector');
+  function renderDetector() {
+    detBtn.textContent = 'Detector: ' + (detectorOn ? 'ON (Collapsed)' : 'OFF (Wave)');
+    detBtn.className = detectorOn ? 'amber' : '';
+  }
+  function toggleDetector() { detectorOn = !detectorOn; renderDetector(); }
+  detBtn.addEventListener('click', toggleDetector);
+  window.addEventListener('keydown', function (e) {
+    if (e.code === 'Space') { e.preventDefault(); if (playing) toggleDetector(); }
+  });
+
+  function gauss() { return (Math.random() + Math.random() + Math.random()) / 1.5 - 1; }
+  function landingY() {
+    if (detectorOn) {
+      var band = Math.random() < 0.5 ? [SLIT1_Y - 4, SLIT1_Y + SLIT_H + 4] : [SLIT2_Y - 4, SLIT2_Y + SLIT_H + 4];
+      return band[0] + Math.random() * (band[1] - band[0]);
+    }
+    var peaks = [H / 2 - 62, H / 2, H / 2 + 62];
+    var c = peaks[Math.floor(Math.random() * peaks.length)];
+    return Math.max(12, Math.min(H - 12, c + gauss() * 26));
+  }
+  function newTarget() {
+    var h = 34;
+    var y = 20 + Math.random() * (H - 40 - h);
+    target = { y: y, h: h };
+    targetUntil = Date.now() + 3500;
+  }
+  function emit() {
+    if (!playing) return;
+    particles.push({ x: 14, y: H / 2 + gauss() * 14, vx: 3.4, landY: landingY(), scored: false });
+  }
+  function setScore(n) {
+    score = n;
+    document.getElementById('hud-score').textContent = String(score);
+  }
+  function endRound() {
+    playing = false;
+    clearInterval(emitTimer); clearInterval(tickTimer);
+    var isBest = score > best;
+    if (isBest) { best = score; try { localStorage.setItem('quantumConduitBestV1', String(best)); } catch (e) {} }
+    document.getElementById('end-title').textContent = 'Time';
+    document.getElementById('end-text').textContent = isBest ? 'New best score.' : 'Best score: ' + best + '.';
+    document.getElementById('end-score').textContent = 'Score: ' + score;
+    document.getElementById('overlay-end').classList.remove('hidden');
+  }
+  function startRound() {
+    setScore(0); timeLeft = 60;
+    document.getElementById('hud-timer').textContent = '60s';
+    particles = []; flashes = []; target = null;
+    newTarget();
+    playing = true;
+    document.getElementById('overlay-start').classList.add('hidden');
+    document.getElementById('overlay-end').classList.add('hidden');
+    emitTimer = setInterval(emit, 340);
+    tickTimer = setInterval(function () {
+      if (!playing) return;
+      timeLeft--;
+      document.getElementById('hud-timer').textContent = timeLeft + 's';
+      if (timeLeft <= 0) endRound();
+    }, 1000);
+  }
+  document.getElementById('btn-start').addEventListener('click', startRound);
+  document.getElementById('btn-again').addEventListener('click', startRound);
+
+  function draw() {
+    t += 0.03;
+    ctx.fillStyle = '#020205';
+    ctx.fillRect(0, 0, W, H);
+    // Emitter
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath(); ctx.arc(14, H / 2, 7, 0, Math.PI * 2); ctx.fill();
+    // Barrier with two slits
+    ctx.fillStyle = '#4C1D95';
+    ctx.fillRect(BARRIER_X, 0, 8, SLIT1_Y);
+    ctx.fillRect(BARRIER_X, SLIT1_Y + SLIT_H, 8, SLIT2_Y - (SLIT1_Y + SLIT_H));
+    ctx.fillRect(BARRIER_X, SLIT2_Y + SLIT_H, 8, H - (SLIT2_Y + SLIT_H));
+    // Target zone
+    if (playing && target && Date.now() < targetUntil) {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.25)';
+      ctx.fillRect(WALL_X - 4, target.y, 12, target.h);
+      ctx.strokeStyle = '#F59E0B'; ctx.lineWidth = 2;
+      ctx.strokeRect(WALL_X - 4, target.y, 12, target.h);
+    }
+    // Wave arcs or collapsed bands
+    if (!detectorOn) {
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
+      ctx.lineWidth = 1.5;
+      for (var r = 12; r < 200; r += 18) {
+        ctx.beginPath();
+        ctx.arc(BARRIER_X + 4, H / 2, (r + t * 40) % 200, -Math.PI / 2, Math.PI / 2);
+        ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.55)';
+      ctx.fillRect(WALL_X - 4, SLIT1_Y - 4, 12, SLIT_H + 8);
+      ctx.fillRect(WALL_X - 4, SLIT2_Y - 4, 12, SLIT_H + 8);
+    }
+    // Particles
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      if (playing) {
+        p.x += p.vx;
+        if (p.x >= BARRIER_X && p.x - p.vx < BARRIER_X) {
+          // passing the barrier: bend toward landing height
+          p.y += (p.landY - p.y) * 0.12;
+        } else if (p.x > BARRIER_X) {
+          p.y += (p.landY - p.y) * 0.08;
+        }
+        if (p.x >= WALL_X) {
+          if (target && Date.now() < targetUntil && p.landY >= target.y && p.landY <= target.y + target.h && !p.scored) {
+            setScore(score + 10);
+            blip(tone * 2);
+            flashes.push({ x: WALL_X, y: p.landY, life: 14 });
+          }
+          particles.splice(i, 1);
+          continue;
+        }
+      }
+      ctx.fillStyle = detectorOn ? '#F59E0B' : '#C084FC';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+    // Landing flashes
+    for (var j = flashes.length - 1; j >= 0; j--) {
+      var f = flashes[j];
+      ctx.fillStyle = 'rgba(245, 158, 11, ' + (f.life / 14) + ')';
+      ctx.beginPath(); ctx.arc(f.x, f.y, 10 - f.life * 0.4 + 4, 0, Math.PI * 2); ctx.fill();
+      f.life--;
+      if (f.life <= 0) flashes.splice(j, 1);
+    }
+    // Move target on when it expires
+    if (playing && target && Date.now() >= targetUntil) newTarget();
+    requestAnimationFrame(draw);
+  }
+  renderDetector();
+  draw();
+})();
+</script>
+</body>
+</html>
