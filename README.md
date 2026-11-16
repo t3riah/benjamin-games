@@ -27,6 +27,10 @@ progress saved on the player's device only.
   to catch falling gumdrops (10/20/50 points). Endless rounds, best score in
   `gumdropsBestV1`. The Nov 3 match-3 version was replaced by Louie's new
   file. Tailwind inlined, no CDN.
+- **Rock, Paper, Scissors** (`rock-paper-scissors.html`, added Nov 16,
+  2026): first to 5 wins the match. Rock smashes scissors, scissors cut
+  paper, paper covers rock, each with its own animation. Tap or press 1, 2,
+  3 or R, P, S. Scores are session-only.
 
 The hub also embeds one suggested-viewing video: "You've Seen This Your Whole
 Life (Real Fluid Simulation)" by Graph Gazer on YouTube
@@ -45,6 +49,7 @@ was checked.
 - `quantum.html`, `fluid.html` — the two new games
 - `battleship.html`, `gumdrops.html` — replaced Nov 8 with Louie's new
   versions (see above); `arrows.html` unchanged from Nov 3
+- `rock-paper-scissors.html` — added Nov 16, 2026 (see above)
 - `CNAME` — `games.no13thfloor.org`, unchanged
 - `README.md` — this file
 - `BRAND.md` — brand DNA
@@ -54,7 +59,7 @@ was checked.
 This staging folder is the complete publish set. Replace the live GitHub
 Pages source for games.no13thfloor.org with exactly these files:
 `index.html`, `quantum.html`, `fluid.html`, `battleship.html`, `arrows.html`,
-`gumdrops.html`, `CNAME`, `README.md`, `BRAND.md`, `VERIFY.md`.
+`gumdrops.html`, `rock-paper-scissors.html`, `CNAME`, `README.md`, `BRAND.md`, `VERIFY.md`.
 Confirm the live CNAME still reads `games.no13thfloor.org`. Open each game
 live once and confirm saved progress survived: Arrows level progress should
 still be there, since its localStorage key was kept unchanged. Note: the Nov 8
